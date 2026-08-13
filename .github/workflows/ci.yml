@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-14
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           submodules: recursive
       - name: System deps (GDAL + libffi)
@@ -24,6 +24,7 @@ jobs:
         run: |
           curl -fsSL -o arturo.zip \
             "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-macos-arm64.zip"
+          echo "1f604b4068733f0c7cda549cccb125ed9aaf6209181276b20b848d77859a0347  arturo.zip" | shasum -a 256 -c -
           unzip -q arturo.zip -d arturo-bin
           chmod +x arturo-bin/arturo
           echo "$PWD/arturo-bin" >> "$GITHUB_PATH"
@@ -47,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           submodules: recursive
       - name: Full matrix in the OSGeo GDAL 3.8 container
@@ -61,6 +62,7 @@ jobs:
             apt-get install -y -qq libwebkit2gtk-4.0-dev
             curl -fsSL -o arturo.zip \
               "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-linux-amd64-legacy.zip"
+            echo "9193b971a2ceceb06ad7aa36822c64989859d9bea4414f409a20d0333cc14dd5  arturo.zip" | sha256sum -c -
             unzip -q arturo.zip -d arturo-bin
             chmod +x arturo-bin/arturo
             export PATH="$PWD/arturo-bin:$PATH"
@@ -80,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           submodules: recursive
       - name: Full matrix in the OSGeo GDAL container
@@ -93,6 +95,7 @@ jobs:
               binutils libwebkit2gtk-4.1-dev libgtk-3-dev libmpfr-dev
             curl -fsSL -o arturo.zip \
               "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-linux-amd64.zip"
+            echo "764e484bf226ed14494b0e87601af4cd399da778d31ea059150bb07a621bb35d  arturo.zip" | sha256sum -c -
             unzip -q arturo.zip -d arturo-bin
             chmod +x arturo-bin/arturo
             export PATH="$PWD/arturo-bin:$PATH"
