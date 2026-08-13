@@ -1,0 +1,49 @@
+;===========================================================
+; write.art - raster creation + write round-trip (SPEC 45)
+;
+; Create a GeoTIFF through GDALCreate, set geotransform and
+; projection, write a band with GDALRasterIO (GF_Write), then
+; reopen and read the band + georeferencing back.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+check: function [label got expected] [
+    if got = expected [ print ["PASS" label] ]
+    if not? (got = expected) [ print ["FAIL" label "got:" got "expected:" expected] ]
+]
+
+path: "/tmp/gdal_art_roundtrip.tif"
+
+do [
+    ds: createDataset "GTiff" path 4 3 1 GDT_Float32
+    check "created" (null? ds) false
+    if not? (null? ds) [
+        negSmall: 0.0 - 0.01
+        rc: setGeotransform ds @[77.0 0.01 0.0 31.0 0.0 negSmall]
+        check "set geotransform" rc 0
+        wkt: {GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]}
+        rc2: setProjection ds wkt
+        check "set projection" rc2 0
+        rc3: writeBand ds 1 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0]
+        check "write band" rc3 0
+        closeDataset ds
+    ]
+
+    ds2: gdalOpen path
+    check "reopen" (null? ds2) false
+    if not? (null? ds2) [
+        px: readBand ds2 1
+        check "pixels round-trip" px [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0]
+        gt: geotransform ds2
+        check "geotransform round-trip" gt @[77.0 0.01 0.0 31.0 0.0 (0.0 - 0.01)]
+        pr: projection ds2
+        check "projection round-trip" (contains? pr "WGS") true
+        closeDataset ds2
+    ]
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "write: all tests passed" ]
+    if not? (t\failures = 0) [ panic "write: FAILED" ]
+]

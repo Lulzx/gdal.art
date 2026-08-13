@@ -3,6 +3,14 @@
 ; `unknown` is emitted deliberately when unverified.
 
 gdalOwnership: #[
+    "GDALCreate": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALIdentifyDriver": #[
+        ownership: "unknown"
+        release: null
+    ]
     "GDALIdentifyDriverEx": #[
         ownership: "unknown"
         release: null
@@ -39,6 +47,14 @@ gdalOwnership: #[
         ownership: "borrowed"
         release: null
     ]
+    "GDALGetThreadSafeDataset": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALBeginAsyncReader": #[
+        ownership: "unknown"
+        release: null
+    ]
     "GDALGetSpatialRef": #[
         ownership: "unknown"
         release: null
@@ -56,6 +72,14 @@ gdalOwnership: #[
         release: null
     ]
     "GDALDatasetGetLayerByName": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetCreateLayer": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetCopyLayer": #[
         ownership: "unknown"
         release: null
     ]
@@ -159,15 +183,15 @@ gdalOwnership: #[
         ownership: "unknown"
         release: null
     ]
-    "GDALRATClone": #[
-        ownership: "unknown"
-        release: null
-    ]
     "GDALRelationshipCreate": #[
         ownership: "unknown"
         release: null
     ]
     "GDALCreatePansharpenedVRT": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCreateMultiDimensional": #[
         ownership: "unknown"
         release: null
     ]
@@ -204,6 +228,10 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_G_ForceToMultiLineString": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceTo": #[
         ownership: "unknown"
         release: null
     ]
@@ -267,6 +295,10 @@ gdalOwnership: #[
         ownership: "unknown"
         release: null
     ]
+    "OGR_G_BufferEx": #[
+        ownership: "unknown"
+        release: null
+    ]
     "OGR_G_Intersection": #[
         ownership: "unknown"
         release: null
@@ -303,6 +335,10 @@ gdalOwnership: #[
         ownership: "unknown"
         release: null
     ]
+    "OGR_G_MakeValidEx": #[
+        ownership: "unknown"
+        release: null
+    ]
     "OGR_G_Normalize": #[
         ownership: "unknown"
         release: null
@@ -328,6 +364,14 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_G_GetGeometryRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_GetLinearGeometry": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_GetCurveGeometry": #[
         ownership: "unknown"
         release: null
     ]

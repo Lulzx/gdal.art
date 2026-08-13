@@ -156,7 +156,9 @@ gsResolveConditionals: function [gsrcSrc] [
                 gsrcOld: gsrcTop\took
                 gsrcNew: and? (gsrcTop\par) (not? gsrcOld)
                 gsrcLi: (size gsrcStack) - 1
-                gsrcStack\[gsrcLi]\took: or? gsrcOld gsrcNew
+                gsrcFrame2: get gsrcStack gsrcLi
+                gsrcFrame2: #[par: (gsrcFrame2\par) took: (or? gsrcOld gsrcNew)]
+                set gsrcStack gsrcLi gsrcFrame2
                 gsrcActive: gsrcNew
             ]
             if gsrcKw = "#elif" [
@@ -168,7 +170,9 @@ gsResolveConditionals: function [gsrcSrc] [
                 ]
                 gsrcNew: and? (and? (gsrcTop\par) (not? gsrcOld)) (gsEvalIf gsrcExpr)
                 gsrcLi: (size gsrcStack) - 1
-                gsrcStack\[gsrcLi]\took: or? gsrcOld gsrcNew
+                gsrcFrame3: get gsrcStack gsrcLi
+                gsrcFrame3: #[par: (gsrcFrame3\par) took: (or? gsrcOld gsrcNew)]
+                set gsrcStack gsrcLi gsrcFrame3
                 gsrcActive: gsrcNew
             ]
             if gsrcKw = "#endif" [

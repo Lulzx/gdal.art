@@ -93,8 +93,15 @@ gsParseDeclarator: function [gpdToks] [
         ]
         if not? (or? (or? (gpdT = "struct") (gpdT = "union")) (gpdT = "enum")) [
             if gsIsTypeWord gpdT [
-                gpdBase: gpdBase ++ @[gpdT]
-                gpdI: gpdI + 1
+                ; a type word is part of the base type unless it is the
+                ; final token (the declared name, e.g. `typedef int GInt32`).
+                ; A lone token is a bare type (e.g. a return type `int`).
+                gpdIsLast: not? (gpdI < (gpdN - 1))
+                if or? (not? gpdIsLast) (gpdN = 1) [
+                    gpdBase: gpdBase ++ @[gpdT]
+                    gpdI: gpdI + 1
+                ]
+                if and? gpdIsLast (not? (gpdN = 1)) [ break ]
             ]
             if not? (gsIsTypeWord gpdT) [ break ]
         ]
@@ -378,8 +385,7 @@ gsParseAll: function [gpaHeaderNames] [
             if gpaFirst = "typedef" [
                 gpaBody: slice gpaSt 1 (size gpaSt) - 1
                 gpaTypedef: gsParseTypedef gpaBody
-                gpaKind: gpaTypedef\kind
-                if gpaKind = "enum" [
+                gpaKind: gpaTypedef\kind                if gpaKind = "enum" [
                     gpaEnumName: gpaTypedef\name
                     gpaTag: gpaTypedef\tag
                     if not? (null = gpaEnumName) [

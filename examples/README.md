@@ -19,6 +19,7 @@ the generated bindings (see `sugar.art`). The fixtures live in
 | `05_crs_transform.art` | `spatialReference` + `transformPoint` (EPSG:4326 → UTM) |
 | `06_dataset_report.art` | driver, size, band info, geotransform, projection, metadata |
 | `07_layers_and_routes.art` | `eachLayer` + `eachFeature` over line geometries |
+| `08_write_geotiff.art` | `createDataset` + `setGeotransform` + `writeBand`, then read back |
 
 The same API at a glance:
 

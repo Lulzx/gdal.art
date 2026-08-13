@@ -28,16 +28,20 @@ installed GDAL headers
 
 ## Status
 
-Stages A–D (see `SPEC.md` §41–§44): generation is proven end to end, and
+Stages A–E (see `SPEC.md` §41–§45): generation is proven end to end, and
 both halves of GDAL are exercised — a GeoTIFF is opened and read through
 `GDALRasterIO`, a GeoJSON layer is walked with WKT export through the
-`char**` out-slot, and an EPSG:4326 coordinate is transformed to a
-projected CRS through a coordinate transformer.
+`char**` out-slot, an EPSG:4326 coordinate is transformed to a projected
+CRS through a coordinate transformer, and a GeoTIFF is **created**,
+georeferenced, and written through `GDALCreate` + `GDALRasterIO` and read
+back.
 
 For the installed GDAL (currently **3.13.2** on macOS arm64), generation
-discovers **1549** public C functions, of which **1119** are bound and
-**430** are deferred with an explicit reason. Unsupported declarations are
-reported, never silently dropped.
+discovers **1549** public C functions, of which **1186** are bound and
+**363** are deferred with an explicit reason. `cpl_port.h` is part of the
+parsed surface, so the GInt/CSL type aliases resolve and `GDALCreate`,
+`GDALSetGeoTransform`, `GDALGetMetadata`, and friends are bound.
+Unsupported declarations are reported, never silently dropped.
 
 ```text
 raster core   13 / 13   (100%)
@@ -45,11 +49,12 @@ vector core   16 / 17   (94%)
 SRS core      10 / 10   (100%)
 ```
 
-`make test` runs five suites: the Stage A generation round-trip, the
+`make test` runs six suites: the Stage A generation round-trip, the
 `SPEC` §21 raster success test, the §23 vector success test, the §44 CRS
-transform test, and a suite that locks in the idiomatic layer
-(`gdalOpen`, `rasterSize`, `eachFeature`, `featureFields`, ...).
-`make examples` runs the seven worked examples under `examples/`.
+transform test, a suite that locks in the idiomatic layer (`gdalOpen`,
+`rasterSize`, `eachFeature`, `featureFields`, ...), and a §45 write/read
+round-trip. `make examples` runs the eight worked examples under
+`examples/`.
 
 ## Requirements
 

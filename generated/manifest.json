@@ -8,9 +8,9 @@
   "adapter_version": 3,
   "platform": "macos",
   "architecture": "arm64",
-  "preprocess_command": "cc -E -dM -I/opt/homebrew/Cellar/gdal/3.13.2_1/include -include gdal_fwd.h -include gdal.h -include ogr_core.h -include ogr_api.h -include ogr_srs_api.h -include cpl_error.h -include cpl_conv.h -include cpl_string.h -include cpl_vsi.h -x c /dev/null",
+  "preprocess_command": "cc -E -dM -I/opt/homebrew/Cellar/gdal/3.13.2_1/include -include gdal_fwd.h -include gdal.h -include ogr_core.h -include ogr_api.h -include ogr_srs_api.h -include cpl_error.h -include cpl_conv.h -include cpl_string.h -include cpl_vsi.h -include cpl_port.h -x c /dev/null",
   "functions_seen": 1549,
-  "functions_bound": 1119,
-  "functions_deferred": 430,
+  "functions_bound": 1186,
+  "functions_deferred": 363,
   "functions_ignored": 0
 }

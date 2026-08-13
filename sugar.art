@@ -38,6 +38,62 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
 
 ;------------------------------------------------------------------
+; raster creation / writing
+;------------------------------------------------------------------
+
+; create a new raster dataset via a driver short name ("GTiff", "PNG", ...)
+createDataset: function [cdDriver cdPath cdW cdH cdBands cdType] [
+    cdR: gdalAllRegister
+    cdD: gdalGetDriverByName cdDriver
+    if null? cdD [ return null ]
+    return (gdalCreate cdD cdPath cdW cdH cdBands cdType null)
+]
+
+setProjection: function [spDs spWkt][ return (gdalSetProjection spDs spWkt) ]
+
+; set the affine geotransform from a [gt0..gt5] block
+setGeotransform: function [sgtDs sgtGT] [
+    sgtBuf: ffiAlloc 48
+    sgtS1: ffiStoreF64 sgtBuf 0 (sgtGT\0)
+    sgtS2: ffiStoreF64 sgtBuf 8 (sgtGT\1)
+    sgtS3: ffiStoreF64 sgtBuf 16 (sgtGT\2)
+    sgtS4: ffiStoreF64 sgtBuf 24 (sgtGT\3)
+    sgtS5: ffiStoreF64 sgtBuf 32 (sgtGT\4)
+    sgtS6: ffiStoreF64 sgtBuf 40 (sgtGT\5)
+    sgtRc: gdalSetGeoTransform sgtDs sgtBuf
+    sgtF: ffiFree sgtBuf
+    return sgtRc
+]
+
+; write one band from a flat row-major block of Arturo numbers
+writeBand: function [wbDs wbIndex wbPixels] [
+    wbB: gdalGetRasterBand wbDs wbIndex
+    if null? wbB [ return null ]
+    wbW: gdalGetRasterBandXSize wbB
+    wbH: gdalGetRasterBandYSize wbB
+    wbT: gdalGetRasterDataType wbB
+    wbBps: bandBytes wbT
+    if wbBps = 0 [ return null ]
+    wbN: wbW * wbH
+    wbBuf: ffiAlloc (wbN * wbBps)
+    wbI: 0
+    while [wbI < wbN] [
+        wbV: wbPixels\[wbI]
+        if wbT = GDT_Byte [ wbS1: ffiStoreU8 wbBuf wbI wbV ]
+        if wbT = GDT_UInt16 [ wbS2: ffiStoreU16 wbBuf (wbI * 2) wbV ]
+        if wbT = GDT_Int16 [ wbS3: ffiStoreI16 wbBuf (wbI * 2) wbV ]
+        if wbT = GDT_UInt32 [ wbS4: ffiStoreU32 wbBuf (wbI * 4) wbV ]
+        if wbT = GDT_Int32 [ wbS5: ffiStoreI32 wbBuf (wbI * 4) wbV ]
+        if wbT = GDT_Float32 [ wbS6: ffiStoreF32 wbBuf (wbI * 4) wbV ]
+        if wbT = GDT_Float64 [ wbS7: ffiStoreF64 wbBuf (wbI * 8) wbV ]
+        wbI: wbI + 1
+    ]
+    wbRc: gdalRasterIO wbB GF_Write 0 0 wbW wbH wbBuf wbW wbH wbT 0 0
+    wbF: ffiFree wbBuf
+    return wbRc
+]
+
+;------------------------------------------------------------------
 ; dataset facts
 ;------------------------------------------------------------------
 
