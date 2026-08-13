@@ -1,0 +1,217 @@
+;===========================================================
+; gdal.art generator - types
+;
+; ABI type resolution. Produces a normalized type descriptor for
+; every C type the parser meets:
+;
+;   #[ abi kind handle ctype mutable baseCore ptrDepth ]
+;
+;   kind: void|scalar|str|handle|ptr|strlist|struct|fnptr|unknown
+;   abi : arturo-ffi token ("void","bool","i8".."u64","f32","f64",
+;         "ptr","str") or null when not ABI-representable
+;
+; LP64 vs LLP64 (SPEC 8): `long` is i64 on LP64 and i32 on LLP64.
+; gsLongAbi / gsULongAbi are set during discovery.
+;===========================================================
+
+gsLongAbi: "i64"
+gsULongAbi: "u64"
+
+; scalar aliases that GDAL headers use without a local typedef in the
+; parsed header set (they come from cpl_port.h / stdint / stddef)
+gsScalarAbi: #[
+    "void": "void"
+    "bool": "bool"
+    "_Bool": "bool"
+    "char": "i8"
+    "signed char": "i8"
+    "unsigned char": "u8"
+    "short": "i16"
+    "short int": "i16"
+    "signed short": "i16"
+    "signed short int": "i16"
+    "unsigned short": "u16"
+    "unsigned short int": "u16"
+    "int": "i32"
+    "signed": "i32"
+    "signed int": "i32"
+    "unsigned": "u32"
+    "unsigned int": "u32"
+    "long": "LONG"
+    "signed long": "LONG"
+    "long int": "LONG"
+    "signed long int": "LONG"
+    "unsigned long": "ULONG"
+    "unsigned long int": "ULONG"
+    "long long": "i64"
+    "long long int": "i64"
+    "signed long long": "i64"
+    "signed long long int": "i64"
+    "unsigned long long": "u64"
+    "unsigned long long int": "u64"
+    "float": "f32"
+    "double": "f64"
+    "size_t": "u64"
+    "ssize_t": "i64"
+    "ptrdiff_t": "i64"
+    "intptr_t": "i64"
+    "uintptr_t": "u64"
+    "int8_t": "i8"
+    "uint8_t": "u8"
+    "int16_t": "i16"
+    "uint16_t": "u16"
+    "int32_t": "i32"
+    "uint32_t": "u32"
+    "int64_t": "i64"
+    "uint64_t": "u64"
+    "GByte": "u8"
+    "GInt8": "i8"
+    "GInt16": "i16"
+    "GUInt16": "u16"
+    "GInt32": "i32"
+    "GUInt32": "u32"
+    "GBool": "i32"
+    "GIntBig": "i64"
+    "GUIntBig": "u64"
+    "GInt64": "i64"
+    "GUInt64": "u64"
+    "GPtrDiff_t": "i64"
+    "GUIntptr_t": "u64"
+    "wchar_t": "i32"
+]
+
+gsScalarToken: function [gstkTok] [
+    if gstkTok = "LONG" [ return gsLongAbi ]
+    if gstkTok = "ULONG" [ return gsULongAbi ]
+    return gstkTok
+]
+
+gsScalarLookup: function [gslCore] [
+    if contains? (keys gsScalarAbi) gslCore [
+        return gsScalarToken (get gsScalarAbi gslCore)
+    ]
+    return null
+]
+
+gsHandleName: function [gshTypeName] [
+    gshN: size gshTypeName
+    if gshN > 1 [
+        if (to :string (gshTypeName\[gshN-1])) = "H" [
+            return slice gshTypeName 0 gshN - 2
+        ]
+    ]
+    return gshTypeName
+]
+
+; true when a string's first whitespace-delimited word equals gswWord
+gsStartsWord: function [gswS gswWord] [
+    gswLen: size gswWord
+    if (size gswS) < gswLen [ return false ]
+    gswPref: slice gswS 0 gswLen - 1
+    return (gswPref = gswWord)
+]
+
+; build a type descriptor from base core + pointer chain
+gsBuildType: function [gbtBaseCore gbtConst gbtPtrDepth gbtMutable gbtFnptr] [
+    gbtDesc: #[abi: null kind: "unknown" handle: null ctype: gbtBaseCore mutable: gbtMutable baseCore: gbtBaseCore ptrDepth: gbtPtrDepth]
+    if gbtFnptr [
+        set gbtDesc "kind" "fnptr"
+        return gbtDesc
+    ]
+    ; strip const/volatile from the core for classification
+    gbtWords: split.by: " " gbtBaseCore
+    gbtStripped: []
+    loop gbtWords 'gbtW [
+        gbtWs: to :string gbtW
+        if not? (or? (gbtWs = "const") (gbtWs = "volatile")) [ gbtStripped: gbtStripped ++ @[gbtWs] ]
+    ]
+    gbtCore: join.with: " " gbtStripped
+    set gbtDesc "baseCore" gbtCore
+
+    if gbtCore = "void" [
+        if gbtPtrDepth > 0 [
+            set gbtDesc "kind" "ptr"
+            set gbtDesc "abi" "ptr"
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "void"
+        set gbtDesc "abi" "void"
+        return gbtDesc
+    ]
+    if gbtCore = "char" [
+        if gbtPtrDepth = 1 [
+            set gbtDesc "kind" "str"
+            set gbtDesc "abi" "str"
+            set gbtDesc "mutable" (not? gbtConst)
+            return gbtDesc
+        ]
+        if gbtPtrDepth = 2 [
+            if gbtConst [
+                set gbtDesc "kind" "strlist"
+                set gbtDesc "abi" "ptr"
+            ]
+            if not? gbtConst [
+                set gbtDesc "kind" "charstar2"
+                set gbtDesc "abi" "ptr"
+            ]
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "charstarN"
+        set gbtDesc "abi" "ptr"
+        return gbtDesc
+    ]
+    ; CSLConstList / CSL list aliases resolved as input string lists
+    if gbtCore = "CSLConstList" [
+        if gbtPtrDepth = 0 [
+            set gbtDesc "kind" "strlist"
+            set gbtDesc "abi" "ptr"
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "ptr"
+        set gbtDesc "abi" "ptr"
+        return gbtDesc
+    ]
+    if or? (gsStartsWord gbtCore "struct ") (gsStartsWord gbtCore "union ") [
+        if gbtPtrDepth > 0 [
+            set gbtDesc "kind" "ptr"
+            set gbtDesc "abi" "ptr"
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "struct"
+        return gbtDesc
+    ]
+    ; typedef name with no extra pointers -> resolve through the table
+    if gbtPtrDepth = 0 [
+        if contains? (keys gsTypedefs) gbtCore [
+            gbtRes: get gsTypedefs gbtCore
+            if not? (null = gbtRes) [
+                return gbtRes
+            ]
+        ]
+    ]
+    ; scalar base
+    gbtScal: gsScalarLookup gbtCore
+    if not? (null = gbtScal) [
+        if gbtPtrDepth > 0 [
+            set gbtDesc "kind" "ptr"
+            set gbtDesc "abi" "ptr"
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "scalar"
+        set gbtDesc "abi" gbtScal
+        return gbtDesc
+    ]
+    ; a typedef name with extra pointers -> pointer (e.g. GDALDatasetH *)
+    if gbtPtrDepth > 0 [
+        if contains? (keys gsTypedefs) gbtCore [
+            set gbtDesc "kind" "ptr"
+            set gbtDesc "abi" "ptr"
+            return gbtDesc
+        ]
+        set gbtDesc "kind" "ptr"
+        set gbtDesc "abi" "ptr"
+        return gbtDesc
+    ]
+    set gbtDesc "kind" "unknown"
+    return gbtDesc
+]

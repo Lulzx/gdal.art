@@ -1,0 +1,25 @@
+;===========================================================
+; gdal.art - idiomatic sugar
+;
+; A small layer over the generated 1:1 bindings. The raw layer
+; stays recognizable (gdalOpenEx, ogr_G_ExportToWkt, ...); these
+; helpers are convenience only and never replace it.
+;===========================================================
+
+; open a dataset for read-only raster access
+openDataset: function [odPath][
+    return (gdalOpenEx odPath GDAL_OF_RASTER null null null)
+]
+
+; open a dataset allowing vector drivers (GeoJSON/GPKG) in read mode
+openVector: function [ovPath][
+    return (gdalOpenEx ovPath GDAL_OF_VECTOR null null null)
+]
+
+closeDataset: function [cdDs][
+    return (gdalClose cdDs)
+]
+
+rasterWidth: function [rwDs][ return (gdalGetRasterXSize rwDs) ]
+rasterHeight: function [rhDs][ return (gdalGetRasterYSize rhDs) ]
+rasterCount: function [rcDs][ return (gdalGetRasterCount rcDs) ]

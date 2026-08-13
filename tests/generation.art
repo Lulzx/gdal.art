@@ -1,0 +1,38 @@
+;===========================================================
+; generation.art - Stage A (SPEC 41)
+;
+; Prove the pipeline: parse -> normalize -> emit -> load symbol ->
+; call. gdalVersionInfo performs a real round-trip through libgdal;
+; gdalOpenEx on a missing path must return Arturo null (C NULL).
+; The three SPEC-41 functions must be BOUND, not deferred.
+;===========================================================
+
+import "gdal"
+
+do [
+    ; 1. parse + normalize + emit: the three Stage A functions are BOUND
+    if contains? (keys gdalDeferred) "GDALOpenEx" [
+        panic "GDALOpenEx must be BOUND"
+    ]
+    if contains? (keys gdalDeferred) "GDALGetRasterXSize" [
+        panic "GDALGetRasterXSize must be BOUND"
+    ]
+    if contains? (keys gdalDeferred) "GDALClose" [
+        panic "GDALClose must be BOUND"
+    ]
+
+    ; 2. load symbol + call: a real libgdal round-trip
+    v: gdalVersionInfo "RELEASE_NAME"
+    print ["GDAL release:" v]
+    if not? (contains? v ".") [ panic "GDALVersionInfo returned unexpected string" ]
+
+    ; 3. a void call
+    gdalAllRegister
+
+    ; 4. C NULL -> Arturo null (SPEC 16)
+    ds: gdalOpenEx "tests/fixtures/definitely_missing.tif" GDAL_OF_RASTER null null null
+    print ["open(missing) ->" ds]
+    if not? (null? ds) [ panic "expected null for a missing dataset" ]
+
+    print "generation (Stage A): PASS"
+]

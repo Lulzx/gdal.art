@@ -1,0 +1,439 @@
+;===========================================================
+; gdal.art - binding generator entry point
+;
+;   arturo generator/main.art generate            regenerate
+;   arturo generator/main.art check [VERSION]     determinism + golden drift
+;   arturo generator/main.art coverage            print coverage report
+;
+; The generator discovers the installed GDAL (SPEC 6.1), reads the
+; public headers (SPEC 4), parses them (two views), normalizes to an
+; ABI IR, emits generated Arturo, and verifies symbols/constants.
+;===========================================================
+
+;---- config -----------------------------------------------------------
+gsGenVersion: "0.1.0"
+gsFfiVersion: "0.2.0"
+gsAdapterVersion: 3
+gsHeaders: [
+    "gdal_fwd.h" "gdal.h" "ogr_core.h" "ogr_api.h" "ogr_srs_api.h"
+    "cpl_error.h" "cpl_conv.h" "cpl_string.h"
+]
+gsOutRoot: "."
+
+;---- modules -----------------------------------------------------------
+do read "generator/preprocess.art"
+do read "generator/tokenize.art"
+do read "generator/types.art"
+do read "generator/declarations.art"
+do read "generator/normalize.art"
+do read "generator/ownership.art"
+do read "generator/emit.art"
+do read "generator/verify.art"
+do read "generator/report.art"
+
+;---- integer parsing (decimal + hex) ----------------------------------
+gsHexDigit: function [ghdC] [
+    if contains? "0123456789" ghdC [ return to :integer ghdC ]
+    if contains? "abcdef" ghdC [ return 10 + (index "abcdef" ghdC) ]
+    if contains? "ABCDEF" ghdC [ return 10 + (index "ABCDEF" ghdC) ]
+    return 0
+]
+
+gsParseInt: function [gpiS] [
+    gpiS: strip gpiS
+    gpiNeg: false
+    if (size gpiS) > 0 [
+        if (to :string (gpiS\0)) = "-" [
+            gpiNeg: true
+            gpiS: slice gpiS 1 (size gpiS) - 1
+        ]
+    ]
+    gpiHex: false
+    if (size gpiS) > 1 [
+        if (to :string (gpiS\0)) = "0" [
+            if or? ((to :string (gpiS\1)) = "x") ((to :string (gpiS\1)) = "X") [ gpiHex: true ]
+        ]
+    ]
+    gpiVal: 0
+    if gpiHex [
+        gpiI: 2
+        gpiN: size gpiS
+        while [gpiI < gpiN] [
+            gpiC: to :string (gpiS\[gpiI])
+            gpiVal: (gpiVal * 16) + (gsHexDigit gpiC)
+            gpiI: gpiI + 1
+        ]
+    ]
+    if not? gpiHex [
+        if (size gpiS) > 0 [ gpiVal: to :integer gpiS ]
+    ]
+    if gpiNeg [ gpiVal: 0 - gpiVal ]
+    return gpiVal
+]
+
+;---- discovery (SPEC 6.1) ---------------------------------------------
+gsExecCode: function [gecCmd] [
+    gecR: execute.code gecCmd
+    return gecR
+]
+
+; does a cflags/libs flag string start with the given -X marker?
+gsFlagValue: function [gfvFlags gfvMarker] [
+    gfvParts: split.by: " " (strip gfvFlags)
+    loop gfvParts 'gfvP [
+        gfvPs: to :string gfvP
+        if (size gfvPs) > (size gfvMarker) [
+            if (slice gfvPs 0 (size gfvMarker) - 1) = gfvMarker [
+                return slice gfvPs (size gfvMarker) (size gfvPs) - 1
+            ]
+        ]
+    ]
+    return null
+]
+
+; library file extension for the platform
+gsLibExt: function [glePlat] [
+    if glePlat = "windows" [ return ".dll" ]
+    if glePlat = "macos" [ return ".dylib" ]
+    return ".so"
+]
+
+; build a discovery result from version/cflags/libs
+gsBuildDiscovery: function [gbdVersion gbdCflags gbdLibs] [
+    gbdInc: gsFlagValue gbdCflags "-I"
+    gbdLibDir: gsFlagValue gbdLibs "-L"
+    gbdLib: gsFlagValue gbdLibs "-l"
+    if null = gbdLib [ gbdLib: "gdal" ]
+    if null = gbdInc [
+        if not? (null = gbdLibDir) [ gbdInc: gbdLibDir ]
+    ]
+    gbdExt: gsLibExt gsPlatform
+    gbdTarget: (gbdLibDir ?? "/opt/homebrew/lib") ++ "/lib" ++ gbdLib ++ gbdExt
+    return #[
+        version: gbdVersion
+        includeDir: gbdInc
+        libDir: gbdLibDir
+        libName: gbdLib
+        libTarget: gbdTarget
+        cflags: gbdCflags
+        libs: gbdLibs
+    ]
+]
+
+; try a gdal-config-compatible binary
+gsTryConfig: function [gtcBin] [
+    gtcV: gsExecCode (gtcBin ++ " --version")
+    if not? ((gtcV\code) = 0) [ return null ]
+    gtcC: gsExecCode (gtcBin ++ " --cflags")
+    gtcL: gsExecCode (gtcBin ++ " --libs")
+    return gsBuildDiscovery (strip (gtcV\output)) (gtcC\output) (gtcL\output)
+]
+
+; try pkg-config
+gsTryPkgConfig: function [gtpPkg] [
+    gtpV: gsExecCode ("pkg-config --modversion " ++ gtpPkg)
+    if not? ((gtpV\code) = 0) [ return null ]
+    gtpC: gsExecCode ("pkg-config --cflags " ++ gtpPkg)
+    gtpL: gsExecCode ("pkg-config --libs " ++ gtpPkg)
+    return gsBuildDiscovery (strip (gtpV\output)) (gtpC\output) (gtpL\output)
+]
+
+gsDiscover: function [] [
+    gdsEnv: env
+    gdsKeys: keys gdsEnv
+    ; 1. GDAL_CONFIG (absolute path)
+    if contains? gdsKeys "GDAL_CONFIG" [
+        gdsCfg: to :string (get gdsEnv "GDAL_CONFIG")
+        if not? (empty? gdsCfg) [
+            gdsR: gsTryConfig gdsCfg
+            if not? (null = gdsR) [ return gdsR ]
+        ]
+    ]
+    ; 2. gdal-config on PATH
+    gdsR2: gsTryConfig "gdal-config"
+    if not? (null = gdsR2) [ return gdsR2 ]
+    ; 3. pkg-config gdal
+    gdsR3: gsTryPkgConfig "gdal"
+    if not? (null = gdsR3) [ return gdsR3 ]
+    ; 4. explicit env vars
+    if contains? gdsKeys "GDAL_INCLUDE_PATH" [
+        gdsInc: to :string (get gdsEnv "GDAL_INCLUDE_PATH")
+        gdsLib: ""
+        if contains? gdsKeys "GDAL_LIBRARY_PATH" [ gdsLib: to :string (get gdsEnv "GDAL_LIBRARY_PATH") ]
+        if not? (empty? gdsInc) [
+            gdsExt: gsLibExt gsPlatform
+            return #[version: "unknown" includeDir: gdsInc libDir: gdsLib libName: "gdal" libTarget: gdsLib ++ "/libgdal" ++ gdsExt cflags: "-I" ++ gdsInc libs: "-L" ++ gdsLib]
+        ]
+    ]
+    panic "gdal.art: cannot discover GDAL. Set GDAL_CONFIG or GDAL_INCLUDE_PATH/GDAL_LIBRARY_PATH."
+]
+
+;---- constants via cc -E -dM -------------------------------------------
+gsConstPrefixes: ["GDAL" "OGR" "OSR" "CPL" "GDT" "GCI" "GA_" "GF_" "GRIORA" "GNM" "wkb" "WKB" "CXT" "OAMS" "GRA" "OFST" "SRS" "DMD_" "DCAP_" "CE_" "GM_"]
+
+gsHasConstPrefix: function [ghpName] [
+    loop gsConstPrefixes 'ghpP [
+        ghpPs: to :string ghpP
+        if not? ((size ghpName) < (size ghpPs)) [
+            if (slice ghpName 0 (size ghpPs) - 1) = ghpPs [ return true ]
+        ]
+    ]
+    return false
+]
+
+; is a macro value a plain integer literal (decimal or hex, optional -)?
+gsIsIntLiteral: function [gilS] [
+    if empty? gilS [ return false ]
+    gilT: strip gilS
+    if (to :string (gilT\0)) = "-" [ gilT: slice gilT 1 (size gilT) - 1 ]
+    if empty? gilT [ return false ]
+    if (size gilT) > 1 [
+        if (to :string (gilT\0)) = "0" [
+            if or? ((to :string (gilT\1)) = "x") ((to :string (gilT\1)) = "X") [
+                gilI: 2
+                while [gilI < (size gilT)] [
+                    if not? (contains? "0123456789abcdefABCDEF" (to :string (gilT\[gilI]))) [ return false ]
+                    gilI: gilI + 1
+                ]
+                return true
+            ]
+        ]
+    ]
+    ; decimal
+    gilI: 0
+    while [gilI < (size gilT)] [
+        if not? (contains? "0123456789" (to :string (gilT\[gilI]))) [ return false ]
+        gilI: gilI + 1
+    ]
+    return true
+]
+
+; collect constants from macros (-dM) and enum members, resolving aliases
+; mutates the global gsConstants (caller resets it first)
+gsCollectConstants: function [] [
+    gccInc: ""
+    loop gsHeaders 'gccH [ gccInc: gccInc ++ "-include " ++ (to :string gccH) ++ " " ]
+    gccCmd: "cc -E -dM -I" ++ gsIncludeDir ++ " " ++ gccInc ++ "-x c /dev/null"
+    gccR: gsExecCode gccCmd
+    gccAliases: #[]
+    if (gccR\code) = 0 [
+        loop (split.lines (gccR\output)) 'gccLine [
+            gccL: strip gccLine
+            if (size gccL) > 8 [
+                if (slice gccL 0 6) = "#define" [
+                    gccRest: strip (slice gccL 8 (size gccL) - 1)
+                    gccParts: split.by: " " gccRest
+                    if not? (empty? gccParts) [
+                        gccName: to :string (gccParts\0)
+                        if gsHasConstPrefix gccName [
+                            if (size gccParts) > 1 [
+                                gccVal: to :string (gccParts\1)
+                                if not? (contains? (keys gsConstants) gccName) [
+                                    if gsIsIntLiteral gccVal [ set gsConstants gccName (gsParseInt gccVal) ]
+                                ]
+                                ; an identifier value is an alias to another constant
+                                if gsIsIdentWord gccVal [
+                                    set gccAliases gccName gccVal
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+    ; enum members
+    loop (keys gsEnums) 'gccE [
+        loop (get gsEnums gccE) 'gccM [
+            if not? (contains? (keys gsConstants) (gccM\name)) [
+                if not? (null = (gccM\value)) [ set gsConstants (gccM\name) (gccM\value) ]
+            ]
+        ]
+    ]
+    ; resolve alias values (#define NAME OTHERNAME) to a fixed point
+    gccPass: 0
+    while [gccPass < 16] [
+        gccChanged: false
+        loop (keys gccAliases) 'gccA [
+            gccTarget: get gccAliases gccA
+            if contains? (keys gsConstants) gccTarget [
+                if not? (contains? (keys gsConstants) gccA) [
+                    set gsConstants gccA (get gsConstants gccTarget)
+                    gccChanged: true
+                ]
+            ]
+        ]
+        if not? gccChanged [ gccPass: 16 ]
+        gccPass: gccPass + 1
+    ]
+]
+
+;---- pipeline -----------------------------------------------------------
+; Runs the full pipeline for a given output root. The immutable inputs
+; (gsHeaders, gsIncludeDir, gsLibTarget, gsVersion, ...) and the mutable
+; state dicts (gsHeaderTokens, gsTypedefs, gsEnums, gsStructs, gsConstants)
+; live at the top level; this function only mutates those dicts via `set`
+; and keeps everything else in locals. Function-local reassignment does
+; NOT escape in this Arturo build, so nothing here rebinds a global.
+gsRunPipeline: function [grpMode grpRoot] [
+    ; read + clean + tokenize headers
+    loop gsHeaders 'grpH [
+        grpName: to :string grpH
+        grpPath: gsIncludeDir ++ "/" ++ grpName
+        if not? (exists? grpPath) [
+            panic ("gdal.art: header not found: " ++ grpPath)
+        ]
+        set gsHeaderTokens grpName (gsTokenize (gsClean (read grpPath)))
+    ]
+
+    ; parse -> normalize -> constants -> verify
+    grpFns: gsParseAll gsHeaders
+    grpFns: gsNormalizeAll grpFns
+    gsCollectConstants
+    grpMissing: gsVerifySymbols grpFns
+
+    ; emit + write (each generated source is built into a local first;
+    ; this Arturo build mishandles large strings as nested call args)
+    grpCounts: gsCountDispositions grpFns
+    grpGenDir: grpRoot ++ "/generated"
+    write.directory null grpGenDir
+    grpBind: gsGenBindings grpFns
+    write grpBind (grpGenDir ++ "/gdal.generated.art")
+    grpConst: gsGenConstants
+    write grpConst (grpGenDir ++ "/constants.generated.art")
+    grpTypes: gsGenTypes grpFns
+    write grpTypes (grpGenDir ++ "/types.generated.art")
+    grpOwn: gsGenOwnership grpFns
+    write grpOwn (grpGenDir ++ "/ownership.generated.art")
+    grpManifest: gsGenManifest grpCounts
+    write grpManifest (grpGenDir ++ "/manifest.json")
+
+    ; assemble main.art (ffi + generated + sugar)
+    grpFfi: read "arturo-ffi/main.art"
+    grpSugar: read "sugar.art"
+    grpTypesSrc: read (grpGenDir ++ "/types.generated.art")
+    grpConstSrc: read (grpGenDir ++ "/constants.generated.art")
+    grpBindSrc: read (grpGenDir ++ "/gdal.generated.art")
+    grpOwnSrc: read (grpGenDir ++ "/ownership.generated.art")
+    grpMain: ""
+    grpMain: grpMain ++ grpFfi ++ "\n"
+    grpMain: grpMain ++ ";===== gdal.art generated bindings =====\n"
+    grpMain: grpMain ++ grpTypesSrc
+    grpMain: grpMain ++ grpConstSrc
+    grpMain: grpMain ++ grpBindSrc
+    grpMain: grpMain ++ grpOwnSrc
+    grpMain: grpMain ++ "\n" ++ grpSugar
+    write grpMain (grpRoot ++ "/main.art")
+
+    print ["generated: GDAL" gsVersion "->" grpRoot ++ "/generated"]
+    print ["functions:" grpCounts\total "bound:" grpCounts\bound "deferred:" grpCounts\deferred "ignored:" grpCounts\ignored]
+
+    if or? (grpMode = "coverage") (grpMode = "generate") [
+        gsReport grpFns grpMissing
+    ]
+]
+
+;---- entry --------------------------------------------------------------
+do [
+    gsArgs: arg
+    gsMode: "generate"
+    if (size gsArgs) > 0 [ gsMode: to :string (first gsArgs) ]
+    gsPin: "3.8"
+    if (size gsArgs) > 1 [ gsPin: to :string (gsArgs\1) ]
+
+    ; platform / ABI (SPEC 8)
+    gsPlatform: to :string (sys\os)
+    gsArch: to :string (sys\cpu\arch)
+    gsLongAbi: "i64"
+    gsULongAbi: "u64"
+    if gsPlatform = "windows" [
+        gsLongAbi: "i32"
+        gsULongAbi: "u32"
+    ]
+
+    ; discover GDAL (SPEC 6.1)
+    gsDisc: gsDiscover
+    gsVersion: gsDisc\version
+    gsIncludeDir: gsDisc\includeDir
+    gsLibDir: gsDisc\libDir
+    gsLibName: gsDisc\libName
+    gsLibTarget: gsDisc\libTarget
+    if null = gsIncludeDir [ panic "gdal.art: could not determine GDAL include path" ]
+
+    ; record the preprocessing command (SPEC 6.2)
+    gsPreprocessCmd: "cc -E -dM -I" ++ gsIncludeDir ++ " "
+    loop gsHeaders 'gspH [ gsPreprocessCmd: gsPreprocessCmd ++ "-include " ++ (to :string gspH) ++ " " ]
+    gsPreprocessCmd: gsPreprocessCmd ++ "-x c /dev/null"
+
+    ; mutable generator state (reset before every run)
+    gsHeaderTokens: #[]
+    gsTypedefs: #[]
+    gsEnums: #[]
+    gsStructs: #[]
+    gsConstants: #[]
+
+    if gsMode = "generate" [
+        gsRunPipeline "generate" "."
+    ]
+    if gsMode = "coverage" [
+        gsRunPipeline "coverage" "."
+    ]
+    if gsMode = "check" [
+        gsDetA: ".gen_tmp_a"
+        gsDetB: ".gen_tmp_b"
+        write.directory null gsDetA
+        write.directory null gsDetB
+        gsHeaderTokens: #[]
+        gsTypedefs: #[]
+        gsEnums: #[]
+        gsStructs: #[]
+        gsConstants: #[]
+        gsRunPipeline "generate" gsDetA
+        gsHeaderTokens: #[]
+        gsTypedefs: #[]
+        gsEnums: #[]
+        gsStructs: #[]
+        gsConstants: #[]
+        gsRunPipeline "generate" gsDetB
+        gsDetFiles: ["gdal.generated.art" "constants.generated.art" "types.generated.art" "ownership.generated.art" "manifest.json"]
+        gsDetOk: true
+        loop gsDetFiles 'gsDetF [
+            if not? ((read (gsDetA ++ "/generated/" ++ gsDetF)) = (read (gsDetB ++ "/generated/" ++ gsDetF))) [
+                print ["DRIFT in" gsDetF]
+                gsDetOk: false
+            ]
+        ]
+        execute ("rm -rf " ++ gsDetA ++ " " ++ gsDetB)
+        if not? gsDetOk [ panic "gdal.art: generation is non-deterministic" ]
+        print "determinism: OK"
+
+        ; golden compare only when installed GDAL matches the pin
+        if gsVersion = gsPin [
+            gsGoldTmp: ".gen_tmp_golden"
+            write.directory null gsGoldTmp
+            gsHeaderTokens: #[]
+            gsTypedefs: #[]
+            gsEnums: #[]
+            gsStructs: #[]
+            gsConstants: #[]
+            gsRunPipeline "generate" gsGoldTmp
+            gsGoldOk: true
+            loop gsDetFiles 'gsGoldF [
+                gsGolden: "generated/" ++ gsGoldF
+                gsFresh: gsGoldTmp ++ "/generated/" ++ gsGoldF
+                if exists? gsGolden [
+                    if not? ((read gsGolden) = (read gsFresh)) [
+                        print ["golden drift in" gsGoldF]
+                        gsGoldOk: false
+                    ]
+                ]
+            ]
+            execute ("rm -rf " ++ gsGoldTmp)
+            if not? gsGoldOk [ panic "gdal.art: generated sources drifted from checked-in files" ]
+            print ["golden compare: OK (GDAL" gsPin ")"]
+        ]
+        if not? (gsVersion = gsPin) [
+            print ["golden compare: skipped (installed GDAL" gsVersion "!= pin" gsPin ")"]
+        ]
+    ]
+]

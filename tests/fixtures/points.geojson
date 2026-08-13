@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","features":[
+ {"type":"Feature","id":1,"properties":{"name":"alpha","height":10.5},"geometry":{"type":"Point","coordinates":[77.1,31.0]}},
+ {"type":"Feature","id":2,"properties":{"name":"beta","height":20.25},"geometry":{"type":"Point","coordinates":[77.2,31.1]}}
+]}

@@ -1,0 +1,59 @@
+;===========================================================
+; gdal.art generator - verify
+;
+; Symbol verification (SPEC 29): every BOUND function's symbol is
+; looked up in the shared library. A tiny C probe (SPEC 28) checks
+; that the emitted constants agree with the compiled headers.
+;===========================================================
+
+; run `nm -gU` over the library and collect exported symbols
+gsNmSymbols: function [gnsLib] [
+    gnsOut: #[]
+    gnsR: execute.code ("nm -gU \"" ++ gnsLib ++ "\"")
+    if (gnsR\code) = 0 [
+        loop (split.lines (gnsR\output)) 'gnsLine [
+            gnsParts: split.by: " " (strip gnsLine)
+            gnsLast: last gnsParts
+            if not? (empty? gnsLast) [
+                gnsSym: to :string gnsLast
+                ; strip a leading underscore (Mach-O)
+                if (size gnsSym) > 0 [
+                    if (to :string (gnsSym\0)) = "_" [ gnsSym: slice gnsSym 1 (size gnsSym) - 1 ]
+                ]
+                set gnsOut gnsSym true
+            ]
+        ]
+    ]
+    return gnsOut
+]
+
+; missing symbols among BOUND functions
+gsVerifySymbols: function [gvsFns] [
+    gvsSyms: gsNmSymbols gsLibTarget
+    gvsMissing: []
+    loop gvsFns 'gvsFn [
+        if (gvsFn\disposition) = "BOUND" [
+            if not? (contains? (keys gvsSyms) (gvsFn\name)) [
+                gvsMissing: gvsMissing ++ @[(gvsFn\name)]
+            ]
+        ]
+    ]
+    return gvsMissing
+]
+
+; emit a C probe that prints every constant we generate, for ABI checking
+gsAbiProbeSource: function [] [
+    gapS: ""
+    gapS: gapS ++ "#include <stdio.h>\n"
+    gapS: gapS ++ "#include \"gdal.h\"\n"
+    gapS: gapS ++ "#include \"ogr_api.h\"\n"
+    gapS: gapS ++ "#include \"ogr_srs_api.h\"\n"
+    gapS: gapS ++ "int main(void) {\n"
+    gapNames: sort (keys gsConstants)
+    loop gapNames 'gapN [
+        gapS: gapS ++ "    printf(\"" ++ (to :string gapN) ++ " %ld\\n\", (long)(" ++ (to :string gapN) ++ "));\n"
+    ]
+    gapS: gapS ++ "    return 0;\n"
+    gapS: gapS ++ "}\n"
+    return gapS
+]

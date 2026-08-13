@@ -1,0 +1,119 @@
+;===========================================================
+; gdal.art generator - normalize
+;
+; Resolves every parsed function's return type and parameters to
+; ABI type descriptors and assigns one of three dispositions:
+; BOUND / DEFERRED / IGNORED (SPEC 26). The deferred reason is
+; always recorded.
+;===========================================================
+
+; build a type descriptor for a parsed declarator record
+gsDeclDesc: function [gddDecl] [
+    gddConst: contains? (gddDecl\base) "const"
+    gddDesc: gsBuildType (gddDecl\base) gddConst (gddDecl\ptrDepth) (not? gddConst) (gddDecl\fnptr)
+    set gddDesc "ctype" (gddDecl\base)
+    return gddDesc
+]
+
+; classify a return-type descriptor -> [disposition reason]
+gsClassifyReturn: function [gcrDesc] [
+    gcrKind: gcrDesc\kind
+    if gcrKind = "fnptr" [ return #[disp: "DEFERRED" reason: "function pointer return"] ]
+    if gcrKind = "struct" [ return #[disp: "DEFERRED" reason: "struct return"] ]
+    if gcrKind = "charstar2" [ return #[disp: "DEFERRED" reason: "string list return"] ]
+    if gcrKind = "charstarN" [ return #[disp: "DEFERRED" reason: "pointer depth"] ]
+    if gcrKind = "strlist" [ return #[disp: "DEFERRED" reason: "string list return"] ]
+    if gcrKind = "str" [
+        if gcrDesc\mutable [ return #[disp: "DEFERRED" reason: "owned string return"] ]
+        return #[disp: "BOUND" reason: ""]
+    ]
+    if gcrKind = "unknown" [ return #[disp: "DEFERRED" reason: "unsupported type"] ]
+    ; void / scalar / handle / ptr
+    return #[disp: "BOUND" reason: ""]
+]
+
+; classify a parameter descriptor -> [disposition reason]
+gsClassifyParam: function [gcpDesc] [
+    gcpKind: gcpDesc\kind
+    if gcpKind = "fnptr" [ return #[disp: "DEFERRED" reason: "callback argument"] ]
+    if gcpKind = "struct" [ return #[disp: "DEFERRED" reason: "struct by value"] ]
+    if gcpKind = "charstar2" [ return #[disp: "DEFERRED" reason: "string list output"] ]
+    if gcpKind = "charstarN" [ return #[disp: "DEFERRED" reason: "pointer depth"] ]
+    if gcpKind = "str" [
+        if gcpDesc\mutable [ return #[disp: "DEFERRED" reason: "mutable string buffer"] ]
+        return #[disp: "BOUND" reason: ""]
+    ]
+    if gcpKind = "strlist" [ return #[disp: "BOUND" reason: ""] ]
+    if gcpKind = "ptr" [
+        ; a pointer to a scalar is an out/in parameter (Stage E)
+        if not? (null = (gsScalarLookup (gcpDesc\baseCore))) [
+            if contains? (gcpDesc\ctype) "const" [ return #[disp: "DEFERRED" reason: "input array"] ]
+            return #[disp: "DEFERRED" reason: "output parameter"]
+        ]
+        return #[disp: "BOUND" reason: ""]
+    ]
+    if gcpKind = "unknown" [ return #[disp: "DEFERRED" reason: "unsupported type"] ]
+    ; void / scalar / handle
+    return #[disp: "BOUND" reason: ""]
+]
+
+; normalize parsed functions into final records; returns the list
+gsNormalizeAll: function [gnaFns] [
+    gnaOut: []
+    loop gnaFns 'gnaFn [
+        gnaName: gnaFn\name
+        gnaRetDecl: gnaFn\return
+        gnaRetDesc: gsDeclDesc gnaRetDecl
+        gnaArgs: []
+        gnaAbis: []
+        gnaDisp: "BOUND"
+        gnaReason: ""
+        if gnaFn\variadic [
+            gnaDisp: "DEFERRED"
+            gnaReason: "variadic"
+        ]
+        if gnaDisp = "BOUND" [
+            gnaRC: gsClassifyReturn gnaRetDesc
+            if (gnaRC\disp) = "DEFERRED" [
+                gnaDisp: "DEFERRED"
+                gnaReason: gnaRC\reason
+            ]
+        ]
+        if gnaDisp = "BOUND" [
+            loop gnaFn\params 'gnaP [
+                gnaPD: gsDeclDesc gnaP
+                gnaPC: gsClassifyParam gnaPD
+                if (gnaPC\disp) = "DEFERRED" [
+                    gnaDisp: "DEFERRED"
+                    gnaReason: gnaPC\reason
+                ]
+                gnaArgItem: #[name: (gnaP\name) desc: gnaPD]
+                gnaArgs: gnaArgs ++ @[gnaArgItem]
+                gnaAbis: gnaAbis ++ @[(gnaPD\abi)]
+            ]
+        ]
+        gnaOutItem: #[
+            name: gnaName
+            header: gnaFn\header
+            disposition: gnaDisp
+            reason: gnaReason
+            return: gnaRetDesc
+            args: gnaArgs
+        ]
+        gnaOut: gnaOut ++ @[gnaOutItem]
+    ]
+    return gnaOut
+]
+
+; counts for reporting
+gsCountDispositions: function [gcdFns] [
+    gcdBound: 0
+    gcdDeferred: 0
+    gcdIgnored: 0
+    loop gcdFns 'gcdFn [
+        if (gcdFn\disposition) = "BOUND" [ gcdBound: gcdBound + 1 ]
+        if (gcdFn\disposition) = "DEFERRED" [ gcdDeferred: gcdDeferred + 1 ]
+        if (gcdFn\disposition) = "IGNORED" [ gcdIgnored: gcdIgnored + 1 ]
+    ]
+    return #[bound: gcdBound deferred: gcdDeferred ignored: gcdIgnored total: (size gcdFns)]
+]

@@ -1,0 +1,108 @@
+;===========================================================
+; gdal.art generator - tokenize
+;
+; Turns cleaned header text into a flat token block. Tokens are
+; strings: identifiers, numbers, string literals (quoted),
+; single-character punctuation, and "..." (variadic ellipsis).
+;
+; Character classification avoids :integer code points; it uses
+; membership in fixed alphabet strings.
+;===========================================================
+
+gsAlphaStr: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+gsDigitStr: "0123456789"
+gsHexStr: "0123456789abcdefABCDEFxX"
+
+gsIsAlpha: function [gtiaC] [ return (contains? gsAlphaStr gtiaC) ]
+gsIsDigit: function [gtidC] [ return (contains? gsDigitStr gtidC) ]
+gsIsAlnum: function [gtinC] [ return (or? (contains? gsAlphaStr gtinC) (contains? gsDigitStr gtinC)) ]
+gsIsSpace: function [gtisC] [
+    return (or? (or? (gtisC = " ") (gtisC = "\t")) (or? (gtisC = "\n") (gtisC = "\r")))
+]
+
+gsTokenize: function [gttSrc] [
+    gttOut: []
+    gttI: 0
+    gttN: size gttSrc
+    while [gttI < gttN] [
+        gttC: to :string (gttSrc\[gttI])
+        if gsIsSpace gttC [
+            gttI: gttI + 1
+        ]
+        if not? (gsIsSpace gttC) [
+            ; identifier
+            if gsIsAlpha gttC [
+                gttWord: ""
+                while [gttI < gttN] [
+                    gttW: to :string (gttSrc\[gttI])
+                    if gsIsAlnum gttW [
+                        gttWord: gttWord ++ gttW
+                        gttI: gttI + 1
+                    ]
+                    if not? (gsIsAlnum gttW) [ break ]
+                ]
+                gttOut: gttOut ++ @[gttWord]
+            ]
+            ; number
+            if not? (gsIsAlpha gttC) [
+                if gsIsDigit gttC [
+                    gttNum: ""
+                    while [gttI < gttN] [
+                        gttNd: to :string (gttSrc\[gttI])
+                        if contains? gsHexStr gttNd [
+                            gttNum: gttNum ++ gttNd
+                            gttI: gttI + 1
+                        ]
+                        if not? (contains? gsHexStr gttNd) [ break ]
+                    ]
+                    gttOut: gttOut ++ @[gttNum]
+                ]
+            ]
+            ; string literal
+            if gttC = "\"" [
+                gttStr: "\""
+                gttI: gttI + 1
+                while [gttI < gttN] [
+                    gttS: to :string (gttSrc\[gttI])
+                    gttStr: gttStr ++ gttS
+                    gttI: gttI + 1
+                    if gttS = "\"" [ break ]
+                ]
+                gttOut: gttOut ++ @[gttStr]
+            ]
+            ; char literal
+            if gttC = "'" [
+                gttCh: "'"
+                gttI: gttI + 1
+                while [gttI < gttN] [
+                    gttQ: to :string (gttSrc\[gttI])
+                    gttCh: gttCh ++ gttQ
+                    gttI: gttI + 1
+                    if gttQ = "'" [ break ]
+                ]
+                gttOut: gttOut ++ @[gttCh]
+            ]
+            ; ellipsis
+            if gttC = "." [
+                gttI: gttI + 1
+                if gttI < gttN [
+                    if (to :string (gttSrc\[gttI])) = "." [
+                        if (gttI + 1) < gttN [
+                            if (to :string (gttSrc\[gttI+1])) = "." [
+                                gttOut: gttOut ++ @["..."]
+                                gttI: gttI + 2
+                            ]
+                        ]
+                    ]
+                ]
+                ; a lone '.' is dropped (should not appear in cleaned C)
+            ]
+            ; other punctuation
+            if not? (or? (or? (gsIsAlpha gttC) (gsIsDigit gttC)) (or? (gttC = "\"") (or? (gttC = "'") (gttC = ".")))) [
+                gttOut: gttOut ++ @[gttC]
+                gttI: gttI + 1
+            ]
+        ]
+    ]
+    return gttOut
+]

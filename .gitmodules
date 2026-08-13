@@ -1,0 +1,3 @@
+[submodule "arturo-ffi"]
+	path = arturo-ffi
+	url = https://github.com/Lulzx/arturo-ffi.git

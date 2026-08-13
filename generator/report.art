@@ -1,0 +1,70 @@
+;===========================================================
+; gdal.art generator - report
+;
+; Machine-readable coverage report (SPEC 40): counts, deferred
+; reasons, missing symbols, and milestone-subset status.
+;===========================================================
+
+gsSubsets: #[
+    "raster core": ["GDALAllRegister" "GDALVersionInfo" "GDALOpenEx" "GDALClose" "GDALGetRasterXSize" "GDALGetRasterYSize" "GDALGetRasterCount" "GDALGetRasterBand" "GDALGetRasterDataType" "GDALGetRasterBandXSize" "GDALGetRasterBandYSize" "GDALGetGeoTransform" "GDALGetProjectionRef"]
+    "vector core": ["GDALOpenEx" "GDALClose" "GDALDatasetGetLayerCount" "GDALDatasetGetLayer" "GDALDatasetGetLayerByName" "OGR_L_ResetReading" "OGR_L_GetNextFeature" "OGR_L_GetFeatureCount" "OGR_F_GetFID" "OGR_F_GetFieldCount" "OGR_F_GetFieldAsString" "OGR_F_GetGeometryRef" "OGR_F_Destroy" "OGR_G_GetGeometryType" "OGR_G_GetGeometryName" "OGR_G_ExportToWkt" "OGR_G_ExportToJson"]
+    "SRS core": ["OSRNewSpatialReference" "OSRDestroySpatialReference" "OSRImportFromEPSG" "OSRImportFromWkt" "OSRExportToWkt" "OSRGetAuthorityCode" "OSRGetAuthorityName" "OCTNewCoordinateTransformation" "OCTTransform" "OCTDestroyCoordinateTransformation"]
+]
+
+gsReport: function [gsrFns gsrMissing] [
+    gsrCounts: gsCountDispositions gsrFns
+    print ""
+    print "GDAL C API coverage"
+    print "==================="
+    print ["public functions discovered:" gsrCounts\total]
+    print ["BOUND   (generated):        " gsrCounts\bound]
+    print ["DEFERRED:                   " gsrCounts\deferred]
+    print ["IGNORED:                    " gsrCounts\ignored]
+    ; deferred reasons histogram
+    gsrReasons: #[]
+    loop gsrFns 'gsrFn [
+        if (gsrFn\disposition) = "DEFERRED" [
+            gsrR: gsrFn\reason
+            if empty? gsrR [ gsrR: "unspecified" ]
+            if contains? (keys gsrReasons) gsrR [
+                set gsrReasons gsrR (get gsrReasons gsrR) + 1
+            ]
+            if not? (contains? (keys gsrReasons) gsrR) [
+                set gsrReasons gsrR 1
+            ]
+        ]
+    ]
+    if not? (empty? (keys gsrReasons)) [
+        print "  deferred reasons:"
+        loop (sort (keys gsrReasons)) 'gsrK [
+            print ["    " gsrK ":" (get gsrReasons gsrK)]
+        ]
+    ]
+    ; missing symbols
+    if not? (empty? gsrMissing) [
+        print ["runtime symbols missing:" (size gsrMissing)]
+        loop gsrMissing 'gsrM [ print ["    " gsrM] ]
+    ]
+    if empty? gsrMissing [
+        print ["runtime symbols verified:" gsrCounts\bound]
+    ]
+    ; milestone subsets
+    print ""
+    print "milestone subsets"
+    print "-----------------"
+    loop (keys gsSubsets) 'gsrSub [
+        gsrNeed: get gsSubsets gsrSub
+        gsrHave: 0
+        loop gsrNeed 'gsrFnName [
+            loop gsrFns 'gsrFn [
+                if (gsrFn\name) = gsrFnName [
+                    if (gsrFn\disposition) = "BOUND" [ gsrHave: gsrHave + 1 ]
+                ]
+            ]
+        ]
+        gsrPct: 0
+        if (size gsrNeed) > 0 [ gsrPct: (gsrHave * 100) / (size gsrNeed) ]
+        print ["    " gsrSub ":" gsrHave "/" (size gsrNeed) " (" gsrPct "%)"]
+    ]
+    print ""
+]

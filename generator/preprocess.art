@@ -1,0 +1,245 @@
+;===========================================================
+; gdal.art generator - preprocess
+;
+; Turns raw public GDAL headers into a clean C-declaration view:
+;   - strip comments
+;   - resolve conditional-compilation (#if/#ifdef/#ifndef) with a
+;     fixed macro table (the raw C view: no __cplusplus, no
+;     GDAL_COMPILATION, no GDAL_DEBUG, ...)
+;   - strip attribute / calling-convention macros (CPL_DLL, ...)
+;
+; All locals are uniquely prefixed to survive this Arturo build's
+; function-local leakage.
+;===========================================================
+
+; Bare attribute / calling-convention macros dropped as whole tokens.
+; Longer names first so substring replacement cannot mangle them.
+gsNoiseBare: [
+    "CPLSTRING_METHOD_DLL" "CPLSTRING_CLASS_DLL"
+    "CPL_WARN_UNUSED_RESULT" "CPL_RETURNS_NONNULL"
+    "CPL_STDCALL" "CPL_DLL" "CPL_RESTRICT" "CPL_UNUSED"
+    "CPL_C_START" "CPL_C_END" "GDAL_PAM_DEPRECATED"
+]
+
+; Function-like attribute macros: NAME(...) dropped including args.
+gsNoiseFn: [
+    "CPL_WARN_DEPRECATED" "GDAL_DEPRECATED"
+    "CPL_PRINT_FUNC_FORMAT" "CPL_SCAN_FUNC_FORMAT"
+    "CPL_SCANF_FORMAT_STRING" "CPL_FORMAT_STRING"
+    "CPL_IGNORE_RET_VAL"
+]
+
+; Which macros are "defined" in the raw C view. Everything is
+; undefined: we parse the C branch of every header.
+gsDefinedSet: []
+
+gsDefined: function [gsdName] [
+    return (contains? gsDefinedSet gsdName)
+]
+
+; strip // and /* */ comments (line-based, block-comment state across lines)
+gsStripComments: function [gscSrc] [
+    gscOut: []
+    gscInBlock: false
+    loop (split.lines gscSrc) 'gscLine [
+        gscL: gscLine
+        gscResult: ""
+        gscI: 0
+        gscN: size gscL
+        while [gscI < gscN] [
+            gscC: to :string (gscL\[gscI])
+            gscNx: ""
+            if (gscI + 1) < gscN [ gscNx: to :string (gscL\[gscI+1]) ]
+            if not? gscInBlock [
+                if and? (gscC = "/") (gscNx = "/") [ break ]
+                if and? (gscC = "/") (gscNx = "*") [
+                    gscInBlock: true
+                    gscI: gscI + 2
+                ]
+                if not? (or? (and? (gscC = "/") (gscNx = "/")) (and? (gscC = "/") (gscNx = "*"))) [
+                    gscResult: gscResult ++ gscC
+                    gscI: gscI + 1
+                ]
+            ]
+            if gscInBlock [
+                if and? (gscC = "*") (gscNx = "/") [
+                    gscInBlock: false
+                    gscI: gscI + 2
+                ]
+                if not? (and? (gscC = "*") (gscNx = "/")) [
+                    gscI: gscI + 1
+                ]
+            ]
+        ]
+        gscOut: gscOut ++ @[gscResult]
+    ]
+    return join.with: "\n" gscOut
+]
+
+; evaluate one #if term: defined(X) or !defined(X) (possibly parenthesized)
+gsEvalTerm: function [gstTerm] [
+    gstT: strip gstTerm
+    gstNeg: false
+    gstDone: false
+    while [not? gstDone] [
+        if empty? gstT [ gstDone: true ]
+        if not? gstDone [
+            gstC: to :string (gstT\0)
+            if or? (gstC = "!") (gstC = "(") [
+                if gstC = "!" [ gstNeg: not? gstNeg ]
+                gstT: strip (slice gstT 1 (size gstT) - 1)
+            ]
+            if not? (or? (gstC = "!") (gstC = "(")) [ gstDone: true ]
+        ]
+    ]
+    gstVal: false
+    if gstNeg [ gstVal: true ]
+    return gstVal
+]
+
+; evaluate a #if expression (defined()/!/&&/||)
+gsEvalIf: function [gsiExpr] [
+    gsiOrs: split.by: "||" gsiExpr
+    gsiResult: false
+    loop gsiOrs 'gsiOr [
+        gsiAnds: split.by: "&&" gsiOr
+        gsiAndResult: true
+        loop gsiAnds 'gsiAnd [
+            gsiAndResult: and? gsiAndResult (gsEvalTerm gsiAnd)
+        ]
+        gsiResult: or? gsiResult gsiAndResult
+    ]
+    return gsiResult
+]
+
+; resolve conditional-compilation directives; keep only active lines
+gsResolveConditionals: function [gsrcSrc] [
+    gsrcOut: ""
+    gsrcActive: true
+    gsrcStack: []
+    loop (split.lines gsrcSrc) 'gsrcLine [
+        gsrcL: strip gsrcLine
+        gsrcIsDir: false
+        if not? (empty? gsrcL) [
+            if (to :string (gsrcL\0)) = "#" [ gsrcIsDir: true ]
+        ]
+        if not? gsrcIsDir [
+            if gsrcActive [ gsrcOut: gsrcOut ++ gsrcLine ++ "\n" ]
+        ]
+        if gsrcIsDir [
+            gsrcParts: split.by: " " gsrcL
+            gsrcKw: to :string (gsrcParts\0)
+            if gsrcKw = "#ifdef" [
+                gsrcCond: gsDefined (to :string (gsrcParts\1))
+                gsrcFrame: #[par: gsrcActive took: gsrcCond]
+                gsrcStack: gsrcStack ++ @[gsrcFrame]
+                gsrcActive: and? gsrcActive gsrcCond
+            ]
+            if gsrcKw = "#ifndef" [
+                gsrcCond: not? (gsDefined (to :string (gsrcParts\1)))
+                gsrcFrame: #[par: gsrcActive took: gsrcCond]
+                gsrcStack: gsrcStack ++ @[gsrcFrame]
+                gsrcActive: and? gsrcActive gsrcCond
+            ]
+            if gsrcKw = "#if" [
+                gsrcExpr: ""
+                if (size gsrcParts) > 1 [
+                    gsrcExpr: join.with: " " (slice gsrcParts 1 (size gsrcParts) - 1)
+                ]
+                gsrcCond: gsEvalIf gsrcExpr
+                gsrcFrame: #[par: gsrcActive took: gsrcCond]
+                gsrcStack: gsrcStack ++ @[gsrcFrame]
+                gsrcActive: and? gsrcActive gsrcCond
+            ]
+            if gsrcKw = "#else" [
+                gsrcTop: last gsrcStack
+                gsrcOld: gsrcTop\took
+                gsrcNew: and? (gsrcTop\par) (not? gsrcOld)
+                gsrcLi: (size gsrcStack) - 1
+                gsrcStack\[gsrcLi]\took: or? gsrcOld gsrcNew
+                gsrcActive: gsrcNew
+            ]
+            if gsrcKw = "#elif" [
+                gsrcTop: last gsrcStack
+                gsrcOld: gsrcTop\took
+                gsrcExpr: ""
+                if (size gsrcParts) > 1 [
+                    gsrcExpr: join.with: " " (slice gsrcParts 1 (size gsrcParts) - 1)
+                ]
+                gsrcNew: and? (and? (gsrcTop\par) (not? gsrcOld)) (gsEvalIf gsrcExpr)
+                gsrcLi: (size gsrcStack) - 1
+                gsrcStack\[gsrcLi]\took: or? gsrcOld gsrcNew
+                gsrcActive: gsrcNew
+            ]
+            if gsrcKw = "#endif" [
+                gsrcTop: last gsrcStack
+                gsrcActive: gsrcTop\par
+                gsrcStack: slice gsrcStack 0 (size gsrcStack) - 2
+            ]
+        ]
+    ]
+    return gsrcOut
+]
+
+; remove function-like macro NAME(...) including balanced arguments
+; uses `index` (fast) instead of a per-character scan
+gsRemoveFn: function [gsfSrc gsfName] [
+    gsfOut: gsfSrc
+    gsfDone: false
+    while [not? gsfDone] [
+        gsfPos: index gsfOut gsfName
+        if null = gsfPos [ gsfDone: true ]
+        if not? (null = gsfPos) [
+            gsfN: size gsfOut
+            gsfAfter: gsfPos + (size gsfName)
+            gsfWs: gsfAfter
+            while [gsfWs < gsfN] [
+                gsfC: to :string (gsfOut\[gsfWs])
+                if or? (or? (gsfC = " ") (gsfC = "\t")) (gsfC = "\n") [ gsfWs: gsfWs + 1 ]
+                if not? (or? (or? (gsfC = " ") (gsfC = "\t")) (gsfC = "\n")) [ break ]
+            ]
+            gsfEnd: gsfAfter
+            if gsfWs < gsfN [
+                if (to :string (gsfOut\[gsfWs])) = "(" [
+                    gsfDepth: 0
+                    gsfEnd: gsfWs
+                    while [gsfEnd < gsfN] [
+                        gsfC2: to :string (gsfOut\[gsfEnd])
+                        if gsfC2 = "(" [ gsfDepth: gsfDepth + 1 ]
+                        if gsfC2 = ")" [
+                            gsfDepth: gsfDepth - 1
+                            if gsfDepth = 0 [
+                                gsfEnd: gsfEnd + 1
+                                break
+                            ]
+                        ]
+                        gsfEnd: gsfEnd + 1
+                    ]
+                ]
+            ]
+            gsfOut: (slice gsfOut 0 gsfPos - 1) ++ (slice gsfOut gsfEnd (size gsfOut) - 1)
+        ]
+    ]
+    return gsfOut
+]
+
+; strip attribute macros (bare + function-like)
+gsStripMacros: function [gsmSrc] [
+    gsmOut: gsmSrc
+    loop gsNoiseFn 'gsmF [
+        gsmOut: gsRemoveFn gsmOut (to :string gsmF)
+    ]
+    loop gsNoiseBare 'gsmB [
+        gsmOut: replace gsmOut (to :string gsmB) ""
+    ]
+    return gsmOut
+]
+
+; full clean: comments -> join backslash continuations -> conditionals -> macros
+gsClean: function [gsc2Src] [
+    gsc2T: gsStripComments gsc2Src
+    gsc2T: replace gsc2T "\\\n" ""
+    gsc2T: gsResolveConditionals gsc2T
+    gsc2T: gsStripMacros gsc2T
+    return gsc2T
+]

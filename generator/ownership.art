@@ -1,0 +1,36 @@
+;===========================================================
+; gdal.art generator - ownership
+;
+; Ownership is first-class (SPEC 11). This is an explicit, audited
+; table: function -> #[ownership release]. Anything not listed here
+; is `unknown`; we never infer ownership from a name when it is
+; ambiguous. More entries are added as each milestone is verified.
+;===========================================================
+
+gsOwnership: #[
+    "GDALOpenEx": #[ownership: "owned" release: "GDALClose"]
+    "GDALOpen": #[ownership: "owned" release: "GDALClose"]
+    "GDALOpenShared": #[ownership: "owned" release: "GDALClose"]
+    "GDALGetDriverByName": #[ownership: "borrowed" release: null]
+    "GDALGetDriver": #[ownership: "borrowed" release: null]
+    "GDALGetRasterBand": #[ownership: "borrowed" release: null]
+    "GDALGetDatasetRootGroup": #[ownership: "owned" release: "GDALDestroyGroup"]
+    "GDALGetRootGroup": #[ownership: "owned" release: "GDALDestroyGroup"]
+    "OGR_L_GetNextFeature": #[ownership: "owned" release: "OGR_F_Destroy"]
+    "OGR_F_GetGeometryRef": #[ownership: "borrowed" release: null]
+    "OGR_L_GetSpatialRef": #[ownership: "borrowed" release: null]
+    "OGR_L_GetLayerDefn": #[ownership: "borrowed" release: null]
+    "OGR_F_GetDefnRef": #[ownership: "borrowed" release: null]
+    "OGR_G_Clone": #[ownership: "owned" release: "OGR_G_DestroyGeometry"]
+    "OSRNewSpatialReference": #[ownership: "owned" release: "OSRDestroySpatialReference"]
+    "OSRClone": #[ownership: "owned" release: "OSRDestroySpatialReference"]
+    "OCTNewCoordinateTransformation": #[ownership: "owned" release: "OCTDestroyCoordinateTransformation"]
+]
+
+; ownership classification for a function returning a handle
+gsOwnershipFor: function [gofName] [
+    if contains? (keys gsOwnership) gofName [
+        return get gsOwnership gofName
+    ]
+    return #[ownership: "unknown" release: null]
+]

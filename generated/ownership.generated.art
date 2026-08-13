@@ -1,0 +1,507 @@
+; DO NOT EDIT
+; Ownership of pointer-returning functions (SPEC 11).
+; `unknown` is emitted deliberately when unverified.
+
+gdalOwnership: #[
+    "GDALIdentifyDriverEx": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALOpen": #[
+        ownership: "owned"
+        release: "GDALClose"
+    ]
+    "GDALOpenShared": #[
+        ownership: "owned"
+        release: "GDALClose"
+    ]
+    "GDALOpenEx": #[
+        ownership: "owned"
+        release: "GDALClose"
+    ]
+    "GDALGetDriverByName": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "GDALGetDriver": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "GDALCreateDriver": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetDatasetDriver": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetRasterBand": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "GDALGetSpatialRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetGCPSpatialRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetGetLayer": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_L_GetDataset": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetGetLayerByName": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetExecuteSQL": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetGetStyleTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDatasetGetRelationship": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetBandDataset": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetRasterColorTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetOverview": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetRasterSampleOverview": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetRasterSampleOverviewEx": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetDefaultRAT": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGetMaskBand": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandUnaryOp": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandBinaryOpBand": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandBinaryOpDouble": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandBinaryOpDoubleToBand": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandIfThenElse": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandAsDataType": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALMaximumOfNBands": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandMaxConstant": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALMinimumOfNBands": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterBandMinConstant": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALMeanOfNBands": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCreateColorTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCloneColorTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCreateRasterAttributeTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRATTranslateToColorTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRATClone": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRelationshipCreate": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCreatePansharpenedVRT": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALCreateRasterAttributeTableFromMDArrays": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_CreateFromEnvelope": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_CreateGeometry": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ApproximateArcAngles": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceToPolygon": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceToLineString": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceToMultiPolygon": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceToMultiPoint": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ForceToMultiLineString": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_RemoveLowerDimensionSubGeoms": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Clone": #[
+        ownership: "owned"
+        release: "OGR_G_DestroyGeometry"
+    ]
+    "OGR_G_CreateFromGML": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_CreateGeometryFromJson": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_CreateGeometryFromEsriJson": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_GetSpatialReference": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Simplify": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_SimplifyPreserveTopology": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_DelaunayTriangulation": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ConstrainedDelaunayTriangulation": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Boundary": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ConvexHull": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ConcaveHull": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_ConcaveHullOfPolygons": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Buffer": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Intersection": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Union": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_UnionCascaded": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_UnaryUnion": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_PointOnSurface": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Difference": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_SymDifference": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Value": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_MakeValid": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Normalize": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_SetPrecision": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_Polygonize": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_BuildArea": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_SymmetricDifference": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_GetBoundary": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_G_GetGeometryRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGRBuildPolygonFromEdges": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_Fld_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_FD_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_FD_GetFieldDefn": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_GetDefnRef": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "OGR_F_GetGeometryRef": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "OGR_F_StealGeometry": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_StealGeometryEx": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_Clone": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_GetFieldDefnRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_GetGeomFieldRef": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_F_GetStyleTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_L_GetSpatialFilter": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_L_GetNextFeature": #[
+        ownership: "owned"
+        release: "OGR_F_Destroy"
+    ]
+    "OGR_L_GetFeature": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_L_GetLayerDefn": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "OGR_L_GetSpatialRef": #[
+        ownership: "borrowed"
+        release: null
+    ]
+    "OGR_L_GetStyleTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_GetLayer": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_GetLayerByName": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_GetDriver": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_ExecuteSQL": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_GetStyleTable": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_Dr_Open": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGROpen": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGROpenShared": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGRGetDriver": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGRGetDriverByName": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGRGetOpenDS": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_SM_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_SM_GetPart": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_ST_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_STBL_Create": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OSRNewSpatialReference": #[
+        ownership: "owned"
+        release: "OSRDestroySpatialReference"
+    ]
+    "OSRCloneGeogCS": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OSRClone": #[
+        ownership: "owned"
+        release: "OSRDestroySpatialReference"
+    ]
+    "OSRConvertToOtherProjection": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OCTNewCoordinateTransformation": #[
+        ownership: "owned"
+        release: "OCTDestroyCoordinateTransformation"
+    ]
+    "OCTClone": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OCTGetSourceCS": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OCTGetTargetCS": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OCTGetInverse": #[
+        ownership: "unknown"
+        release: null
+    ]
+]
+

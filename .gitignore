@@ -1,0 +1,13 @@
+# build artifacts
+arturo-ffi/native/*.dylib
+arturo-ffi/native/*.so
+arturo-ffi/native/*.dll
+arturo-ffi/tests/libcprobe.dylib
+
+# compiled bytecode caches
+*.bcode
+
+# generated output (regenerate with `make generate`)
+# generated/ and main.art are checked in; these are only temp dirs
+.gen_tmp_*
+.DS_Store

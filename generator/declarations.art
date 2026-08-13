@@ -1,0 +1,493 @@
+;===========================================================
+; gdal.art generator - declarations
+;
+; Walks the tokenized headers and extracts:
+;   - typedefs   (handles, scalar aliases, function pointers)
+;   - enums      (tag + members with literal values)
+;   - structs    (opaque or with fields)
+;   - functions  (return + named parameters)
+;
+; Populates gsTypedefs, gsEnums, gsStructs, gsFunctions.
+;===========================================================
+
+; ---- extracted state (filled by gsParseAll) ----
+gsTypedefs: #[]
+gsEnums: #[]
+gsStructs: #[]
+gsFunctions: []
+gsConstants: #[]
+
+gsBaseKw: ["const" "volatile" "void" "char" "short" "int" "long" "float" "double" "signed" "unsigned" "bool" "_Bool"]
+
+gsSingleScalars: [
+    "size_t" "ssize_t" "ptrdiff_t" "intptr_t" "uintptr_t"
+    "int8_t" "uint8_t" "int16_t" "uint16_t" "int32_t" "uint32_t" "int64_t" "uint64_t"
+    "GByte" "GInt8" "GInt16" "GUInt16" "GInt32" "GUInt32" "GBool"
+    "GIntBig" "GUIntBig" "GInt64" "GUInt64" "GPtrDiff_t" "GUIntptr_t" "wchar_t"
+]
+
+gsIsIdentWord: function [gsiwW] [
+    if empty? gsiwW [ return false ]
+    return (gsIsAlpha (to :string (gsiwW\0)))
+]
+
+gsIsDigitWord: function [gsdwW] [
+    if empty? gsdwW [ return false ]
+    return (gsIsDigit (to :string (gsdwW\0)))
+]
+
+gsIsTypeWord: function [gtwW] [
+    if contains? gsBaseKw gtwW [ return true ]
+    if contains? gsSingleScalars gtwW [ return true ]
+    if contains? (keys gsTypedefs) gtwW [ return true ]
+    if contains? (keys gsStructs) gtwW [ return true ]
+    return false
+]
+
+; split a token block into statements on top-level ';' (brace-aware)
+gsSplitStatements: function [gssToks] [
+    gssOut: []
+    gssCur: []
+    gssDepth: 0
+    loop gssToks 'gssT [
+        gssS: to :string gssT
+        if gssS = "{" [
+            gssCur: gssCur ++ @[gssS]
+            gssDepth: gssDepth + 1
+        ]
+        if gssS = "}" [
+            gssCur: gssCur ++ @[gssS]
+            gssDepth: gssDepth - 1
+        ]
+        if not? (or? (gssS = "{") (gssS = "}")) [
+            if and? (gssS = ";") (gssDepth = 0) [
+                gssOut: gssOut ++ @[gssCur]
+                gssCur: []
+            ]
+            if not? (and? (gssS = ";") (gssDepth = 0)) [
+                gssCur: gssCur ++ @[gssS]
+            ]
+        ]
+    ]
+    if not? (empty? gssCur) [ gssOut: gssOut ++ @[gssCur] ]
+    return gssOut
+]
+
+; parse one declaration (type + declarator) into base/ptr/name/...
+gsParseDeclarator: function [gpdToks] [
+    gpdN: size gpdToks
+    gpdI: 0
+    gpdBase: []
+    while [gpdI < gpdN] [
+        gpdT: to :string (gpdToks\[gpdI])
+        if or? (or? (gpdT = "struct") (gpdT = "union")) (gpdT = "enum") [
+            gpdBase: gpdBase ++ @[gpdT]
+            gpdI: gpdI + 1
+            if gpdI < gpdN [
+                gpdTag: to :string (gpdToks\[gpdI])
+                if gsIsIdentWord gpdTag [
+                    gpdBase: gpdBase ++ @[gpdTag]
+                    gpdI: gpdI + 1
+                ]
+            ]
+        ]
+        if not? (or? (or? (gpdT = "struct") (gpdT = "union")) (gpdT = "enum")) [
+            if gsIsTypeWord gpdT [
+                gpdBase: gpdBase ++ @[gpdT]
+                gpdI: gpdI + 1
+            ]
+            if not? (gsIsTypeWord gpdT) [ break ]
+        ]
+    ]
+    gpdPtrDepth: 0
+    gpdConstPtr: false
+    while [gpdI < gpdN] [
+        gpdT2: to :string (gpdToks\[gpdI])
+        if gpdT2 = "*" [
+            gpdPtrDepth: gpdPtrDepth + 1
+            gpdI: gpdI + 1
+            if gpdI < gpdN [
+                if (to :string (gpdToks\[gpdI])) = "const" [
+                    gpdConstPtr: true
+                    gpdI: gpdI + 1
+                ]
+            ]
+        ]
+        if not? (gpdT2 = "*") [ break ]
+    ]
+    gpdName: null
+    gpdFnptr: false
+    gpdArr: null
+    gpdArrUnknown: false
+    if gpdI < gpdN [
+        gpdT3: to :string (gpdToks\[gpdI])
+        if gpdT3 = "(" [
+            gpdFnptr: true
+            gpdI: gpdI + 1
+            if gpdI < gpdN [
+                if (to :string (gpdToks\[gpdI])) = "*" [ gpdI: gpdI + 1 ]
+            ]
+            if gpdI < gpdN [
+                gpdNxt: to :string (gpdToks\[gpdI])
+                if gsIsIdentWord gpdNxt [
+                    gpdName: gpdNxt
+                    gpdI: gpdI + 1
+                ]
+            ]
+        ]
+        if not? (gpdT3 = "(") [
+            if gsIsIdentWord gpdT3 [
+                gpdName: gpdT3
+                gpdI: gpdI + 1
+                if gpdI < gpdN [
+                    if (to :string (gpdToks\[gpdI])) = "[" [
+                        gpdI: gpdI + 1
+                        if gpdI < gpdN [
+                            gpdSz: to :string (gpdToks\[gpdI])
+                            if gpdSz = "]" [ gpdArrUnknown: true ]
+                            if not? (gpdSz = "]") [
+                                if gsIsDigitWord gpdSz [ gpdArr: to :integer gpdSz ]
+                                if not? (gsIsDigitWord gpdSz) [ gpdArrUnknown: true ]
+                                gpdI: gpdI + 1
+                            ]
+                        ]
+                        while [gpdI < gpdN] [
+                            if (to :string (gpdToks\[gpdI])) = "]" [ break ]
+                            gpdI: gpdI + 1
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+    return #[ base: (join.with: " " gpdBase) ptrDepth: gpdPtrDepth constPtr: gpdConstPtr name: gpdName fnptr: gpdFnptr arr: gpdArr arrUnknown: gpdArrUnknown ]
+]
+
+; extract enum members NAME = VALUE from a token block inside { ... }
+gsParseEnumBody: function [gpeToks] [
+    gpeMembers: []
+    gpeSeen: #[]
+    gpeAuto: 0
+    gpeToks: gpeToks ++ @[","]
+    gpeN: size gpeToks
+    gpeI: 0
+    while [gpeI < gpeN] [
+        gpeName: null
+        gpeVal: null
+        while [gpeI < gpeN] [
+            gpeT: to :string (gpeToks\[gpeI])
+            if gsIsIdentWord gpeT [
+                gpeName: gpeT
+                gpeI: gpeI + 1
+                break
+            ]
+            gpeI: gpeI + 1
+        ]
+        if null = gpeName [ break ]
+        if gpeI < gpeN [
+            if (to :string (gpeToks\[gpeI])) = "=" [
+                gpeI: gpeI + 1
+                if gpeI < gpeN [
+                    gpeVt: to :string (gpeToks\[gpeI])
+                    if gsIsDigitWord gpeVt [
+                        gpeVal: gsParseInt gpeVt
+                        gpeI: gpeI + 1
+                    ]
+                    if not? (gsIsDigitWord gpeVt) [
+                        if contains? (keys gpeSeen) gpeVt [ gpeVal: get gpeSeen gpeVt ]
+                    ]
+                ]
+            ]
+        ]
+        if null = gpeVal [ gpeVal: gpeAuto ]
+        gpeItem: #[name: gpeName value: gpeVal]
+        gpeMembers: gpeMembers ++ @[gpeItem]
+        set gpeSeen gpeName gpeVal
+        gpeAuto: gpeVal + 1
+        while [gpeI < gpeN] [
+            if (to :string (gpeToks\[gpeI])) = "," [
+                gpeI: gpeI + 1
+                break
+            ]
+            gpeI: gpeI + 1
+        ]
+    ]
+    return gpeMembers
+]
+
+; parse an enum statement: tokens starting with "enum"
+gsParseEnum: function [gpenToks gpenOut] [
+    ; gpenOut is #[tag members] filled in place by caller via return
+    gpenN: size gpenToks
+    gpenTag: null
+    gpenMembers: []
+    gpenI: 1   ; skip "enum"
+    if gpenI < gpenN [
+        gpenT: to :string (gpenToks\[gpenI])
+        if gsIsIdentWord gpenT [
+            gpenTag: gpenT
+            gpenI: gpenI + 1
+        ]
+    ]
+    ; optional body { ... }
+    if gpenI < gpenN [
+        if (to :string (gpenToks\[gpenI])) = "{" [
+            gpenBody: []
+            gpenI: gpenI + 1
+            gpenDepth: 1
+            while [gpenI < gpenN] [
+                gpenT2: to :string (gpenToks\[gpenI])
+                if gpenT2 = "{" [ gpenDepth: gpenDepth + 1 ]
+                if gpenT2 = "}" [
+                    gpenDepth: gpenDepth - 1
+                    if gpenDepth = 0 [ break ]
+                ]
+                gpenBody: gpenBody ++ @[gpenT2]
+                gpenI: gpenI + 1
+            ]
+            gpenMembers: gsParseEnumBody gpenBody
+        ]
+    ]
+    return #[tag: gpenTag members: gpenMembers]
+]
+
+; parse a struct/union statement: tokens starting with "struct"/"union"
+gsParseStruct: function [gpsToks] [
+    gpsN: size gpsToks
+    gpsKw: to :string (gpsToks\0)
+    gpsTag: null
+    gpsHasBody: false
+    gpsI: 1
+    if gpsI < gpsN [
+        gpsT: to :string (gpsToks\[gpsI])
+        if gsIsIdentWord gpsT [
+            gpsTag: gpsT
+            gpsI: gpsI + 1
+        ]
+    ]
+    if gpsI < gpsN [
+        if (to :string (gpsToks\[gpsI])) = "{" [ gpsHasBody: true ]
+    ]
+    return #[kw: gpsKw tag: gpsTag hasBody: gpsHasBody]
+]
+
+; parse a typedef statement (tokens already exclude the leading "typedef")
+gsParseTypedef: function [gptyToks] [
+    gptyFirst: to :string (gptyToks\0)
+    if gptyFirst = "enum" [
+        gptyEnum: gsParseEnum gptyToks #[]
+        gptyName: null
+        ; typedef name is the last identifier after the body
+        gptyN: size gptyToks
+        gptyLast: to :string (gptyToks\[gptyN-1])
+        if gsIsIdentWord gptyLast [ gptyName: gptyLast ]
+        return #[ kind: "enum" tag: gptyEnum\tag name: gptyName members: gptyEnum\members ]
+    ]
+    if or? (gptyFirst = "struct") (gptyFirst = "union") [
+        gptySt: gsParseStruct gptyToks
+        gptyName: null
+        gptyN: size gptyToks
+        gptyLast: to :string (gptyToks\[gptyN-1])
+        if gsIsIdentWord gptyLast [ gptyName: gptyLast ]
+        ; typedef struct X {...} Name  -> name is last ident; if no name, it's anonymous
+        if gptyName = (gptySt\tag) [ gptyName: null ]
+        return #[ kind: "struct" tag: gptySt\tag name: gptyName hasBody: gptySt\hasBody ]
+    ]
+    ; scalar / pointer / function-pointer typedef
+    gptyD: gsParseDeclarator gptyToks
+    return #[ kind: "decl" decl: gptyD ]
+]
+
+; split a token block on top-level commas (for parameter lists)
+gsSplitTopComma: function [gstcToks] [
+    gstcOut: []
+    gstcCur: []
+    gstcDepth: 0
+    loop gstcToks 'gstcT [
+        gstcS: to :string gstcT
+        if gstcS = "(" [ gstcDepth: gstcDepth + 1 ]
+        if gstcS = ")" [ gstcDepth: gstcDepth - 1 ]
+        if and? (gstcS = ",") (gstcDepth = 0) [
+            gstcOut: gstcOut ++ @[gstcCur]
+            gstcCur: []
+        ]
+        if not? (and? (gstcS = ",") (gstcDepth = 0)) [
+            gstcCur: gstcCur ++ @[gstcS]
+        ]
+    ]
+    if not? (empty? gstcCur) [ gstcOut: gstcOut ++ @[gstcCur] ]
+    return gstcOut
+]
+
+; find the matching ')' for the '(' at index gfmOpen in gfmToks
+gsMatchParen: function [gfmToks gfmOpen] [
+    gfmDepth: 0
+    gfmN: size gfmToks
+    gfmI: gfmOpen
+    while [gfmI < gfmN] [
+        gfmS: to :string (gfmToks\[gfmI])
+        if gfmS = "(" [ gfmDepth: gfmDepth + 1 ]
+        if gfmS = ")" [
+            gfmDepth: gfmDepth - 1
+            if gfmDepth = 0 [ return gfmI ]
+        ]
+        gfmI: gfmI + 1
+    ]
+    return gfmN - 1
+]
+
+; is a resolved type a pointer (for handle detection on typedefs)?
+gsIsPtrType: function [giptKind] [
+    if contains? ["ptr" "handle" "str" "strlist" "charstar2" "charstarN"] giptKind [ return true ]
+    return false
+]
+
+; record a typedef from a parsed declaration record
+gsRecordTypedef: function [grtDecl] [
+    grtName: grtDecl\name
+    if null = grtName [ return ]
+    grtConst: contains? (grtDecl\base) "const"
+    grtDesc: gsBuildType (grtDecl\base) grtConst (grtDecl\ptrDepth) (not? grtConst) (grtDecl\fnptr)
+    if grtDecl\fnptr [
+        grtDesc: #[abi: null kind: "fnptr" handle: null ctype: (grtDecl\base) mutable: false baseCore: (grtDecl\base) ptrDepth: (grtDecl\ptrDepth)]
+    ]
+    ; pointer typedef ending in H -> handle with semantic name
+    if gsIsPtrType (grtDesc\kind) [
+        if (to :string (grtName\[(size grtName)-1])) = "H" [
+            set grtDesc "kind" "handle"
+            set grtDesc "handle" (gsHandleName grtName)
+        ]
+    ]
+    set grtDesc "ctype" grtName
+    set gsTypedefs grtName grtDesc
+]
+
+; process all headers' tokens into typedefs/enums/structs/functions.
+; Two passes so functions can reference typedefs defined in a later header
+; (gdal.h uses CPLErr/OGRErr from cpl_error.h/ogr_core.h). Returns the
+; function list; typedefs/enums/structs are recorded into the global dicts.
+gsParseAll: function [gpaHeaderNames] [
+    ; pass 1: typedefs / enums / structs
+    loop gpaHeaderNames 'gpaH [
+        gpaName: to :string gpaH
+        gpaToks: get gsHeaderTokens gpaName
+        gpaStmts: gsSplitStatements gpaToks
+        loop gpaStmts 'gpaSt [
+            if empty? gpaSt [ continue ]
+            gpaFirst: to :string (gpaSt\0)
+            if gpaFirst = "typedef" [
+                gpaBody: slice gpaSt 1 (size gpaSt) - 1
+                gpaTypedef: gsParseTypedef gpaBody
+                gpaKind: gpaTypedef\kind
+                if gpaKind = "enum" [
+                    gpaEnumName: gpaTypedef\name
+                    gpaTag: gpaTypedef\tag
+                    if not? (null = gpaEnumName) [
+                        set gsEnums gpaEnumName (gpaTypedef\members)
+                        set gsTypedefs gpaEnumName #[abi: "i32" kind: "scalar" handle: null ctype: gpaEnumName mutable: false baseCore: gpaEnumName ptrDepth: 0]
+                    ]
+                    if not? (null = gpaTag) [
+                        set gsEnums gpaTag (gpaTypedef\members)
+                        set gsTypedefs gpaTag #[abi: "i32" kind: "scalar" handle: null ctype: gpaTag mutable: false baseCore: gpaTag ptrDepth: 0]
+                    ]
+                ]
+                if gpaKind = "struct" [
+                    gpaStName: gpaTypedef\name
+                    gpaTag: gpaTypedef\tag
+                    if not? (null = gpaStName) [
+                        set gsStructs gpaStName #[opaque: not? (gpaTypedef\hasBody)]
+                        set gsTypedefs gpaStName #[abi: null kind: "struct" handle: null ctype: gpaStName mutable: false baseCore: gpaStName ptrDepth: 0]
+                    ]
+                    if not? (null = gpaTag) [
+                        set gsStructs gpaTag #[opaque: not? (gpaTypedef\hasBody)]
+                    ]
+                ]
+                if gpaKind = "decl" [
+                    gsRecordTypedef (gpaTypedef\decl)
+                ]
+            ]
+            if not? (gpaFirst = "typedef") [
+                if gpaFirst = "enum" [
+                    gpaEnum: gsParseEnum gpaSt #[]
+                    if not? (null = (gpaEnum\tag)) [
+                        set gsEnums (gpaEnum\tag) (gpaEnum\members)
+                        set gsTypedefs (gpaEnum\tag) #[abi: "i32" kind: "scalar" handle: null ctype: (gpaEnum\tag) mutable: false baseCore: (gpaEnum\tag) ptrDepth: 0]
+                    ]
+                ]
+                if or? (gpaFirst = "struct") (gpaFirst = "union") [
+                    gpaSt2: gsParseStruct gpaSt
+                    if not? (null = (gpaSt2\tag)) [
+                        set gsStructs (gpaSt2\tag) #[opaque: not? (gpaSt2\hasBody)]
+                    ]
+                ]
+            ]
+        ]
+    ]
+    ; pass 2: functions
+    gpaFns: []
+    gpaSeen: #[]
+    loop gpaHeaderNames 'gpaH [
+        gpaName: to :string gpaH
+        gpaToks: get gsHeaderTokens gpaName
+        gpaStmts: gsSplitStatements gpaToks
+        loop gpaStmts 'gpaSt [
+            if empty? gpaSt [ continue ]
+            gpaFirst: to :string (gpaSt\0)
+            if not? (or? (or? (gpaFirst = "typedef") (gpaFirst = "enum")) (or? (gpaFirst = "struct") (gpaFirst = "union"))) [
+                gpaFn: gsParseFunction gpaSt
+                if not? (null = gpaFn) [
+                    if not? (contains? (keys gpaSeen) (gpaFn\name)) [
+                        set gpaSeen (gpaFn\name) true
+                        set gpaFn "header" gpaName
+                        gpaFns: gpaFns ++ @[gpaFn]
+                    ]
+                ]
+            ]
+        ]
+    ]
+    return gpaFns
+]
+
+; parse a function statement (tokens are a whole statement, no leading typedef/enum/struct)
+gsParseFunction: function [gpfToks] [
+    gpfN: size gpfToks
+    ; find first '(' at depth 0 (return type has no parens in this subset)
+    gpfOpen: null
+    gpfI: 0
+    while [gpfI < gpfN] [
+        if (to :string (gpfToks\[gpfI])) = "(" [
+            gpfOpen: gpfI
+            break
+        ]
+        gpfI: gpfI + 1
+    ]
+    if null = gpfOpen [ return null ]
+    if gpfOpen = 0 [ return null ]
+    gpfName: to :string (gpfToks\[gpfOpen-1])
+    if not? (gsIsIdentWord gpfName) [ return null ]
+    gpfClose: gsMatchParen gpfToks gpfOpen
+    ; return type tokens
+    gpfRetToks: slice gpfToks 0 gpfOpen - 2
+    ; params
+    gpfParamToks: []
+    if (gpfClose - gpfOpen) > 1 [ gpfParamToks: slice gpfToks gpfOpen + 1 gpfClose - 1 ]
+    ; variadic?
+    gpfVariadic: false
+    loop gpfParamToks 'gpfP [
+        if (to :string gpfP) = "..." [ gpfVariadic: true ]
+    ]
+    ; C `(void)` means zero parameters
+    if (size gpfParamToks) = 1 [
+        if (to :string (gpfParamToks\0)) = "void" [ gpfParamToks: [] ]
+    ]
+    ; return declarator
+    gpfRetDecl: gsParseDeclarator gpfRetToks
+    ; params
+    gpfParams: []
+    gpfGroups: gsSplitTopComma gpfParamToks
+    loop gpfGroups 'gpfG [
+        gpfGD: gsParseDeclarator gpfG
+        gpfParams: gpfParams ++ @[gpfGD]
+    ]
+    return #[ name: gpfName return: gpfRetDecl params: gpfParams variadic: gpfVariadic ]
+]

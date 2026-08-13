@@ -1,0 +1,16 @@
+{
+  "gdal_version": "3.13.2",
+  "include_path": "/opt/homebrew/Cellar/gdal/3.13.2_1/include",
+  "library_path": "/opt/homebrew/Cellar/gdal/3.13.2_1/lib",
+  "library_name": "gdal",
+  "generator_version": "0.1.0",
+  "arturo_ffi_version": "0.2.0",
+  "adapter_version": 3,
+  "platform": "macos",
+  "architecture": "arm64",
+  "preprocess_command": "cc -E -dM -I/opt/homebrew/Cellar/gdal/3.13.2_1/include -include gdal_fwd.h -include gdal.h -include ogr_core.h -include ogr_api.h -include ogr_srs_api.h -include cpl_error.h -include cpl_conv.h -include cpl_string.h -x c /dev/null",
+  "functions_seen": 1399,
+  "functions_bound": 820,
+  "functions_deferred": 579,
+  "functions_ignored": 0
+}
