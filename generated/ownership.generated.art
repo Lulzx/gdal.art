@@ -563,5 +563,49 @@ gdalOwnership: #[
         ownership: "unknown"
         release: null
     ]
+    "GDALTranslate": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALWarp": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALVectorTranslate": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALDEMProcessing": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALNearblack": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALGrid": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALRasterize": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALFootprint": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALBuildVRT": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALMultiDimTranslate": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "GDALTileIndex": #[
+        ownership: "unknown"
+        release: null
+    ]
 ]
 

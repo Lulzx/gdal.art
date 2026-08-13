@@ -28,22 +28,25 @@ installed GDAL headers
 
 ## Status
 
-Stages A–F (see `SPEC.md` §41–§46): generation is proven end to end, and
+Stages A–G (see `SPEC.md` §41–§47): generation is proven end to end, and
 both halves of GDAL are exercised in both directions — a GeoTIFF is read
 through `GDALRasterIO` and **created** through `GDALCreate`; a GeoJSON
 layer is walked with WKT export and **written** by creating a dataset,
 layer, fields, features, and point/line geometries; an EPSG:4326
 coordinate is transformed to a projected CRS through a coordinate
-transformer, and geometries can be transformed and tested with GEOS
-predicates (`distance`, `intersects`, `contains`, `within`, `union`).
+transformer, with GEOS predicates and geometry transforms; and the
+`gdal_utils.h` family runs through the bindings — format conversion,
+reprojection/warping, vector conversion, rasterization, and dataset
+inspection (`GDALTranslate`, `GDALWarp`, `GDALVectorTranslate`,
+`GDALRasterize`, `GDALInfo`) with option arrays built as CSL argv lists.
 
 For the installed GDAL (currently **3.13.2** on macOS arm64), generation
-discovers **1549** public C functions, of which **1186** are bound and
-**363** are deferred with an explicit reason. `cpl_port.h` is part of the
-parsed surface, so the GInt/CSL type aliases resolve and `GDALCreate`,
-`GDALSetGeoTransform`, `GDALGetMetadata`, the `OGR_F_*`/`OGR_G_*`/`OGR_L_*`
-create/set predicates, and friends are bound. Unsupported declarations are
-reported, never silently dropped.
+discovers **1609** public C functions, of which **1259** are bound and
+**350** are deferred with an explicit reason. `cpl_port.h` and
+`gdal_utils.h` are part of the parsed surface; owned `char*` returns are
+bound at the raw layer as `ptr` (the caller frees them via `VSIFree`), so
+`GDALInfo`, `OGR_G_ExportToJson`, and friends are available. Unsupported
+declarations are reported, never silently dropped.
 
 ```text
 raster core   13 / 13   (100%)
@@ -51,13 +54,12 @@ vector core   16 / 17   (94%)
 SRS core      10 / 10   (100%)
 ```
 
-`make test` runs seven suites: the Stage A generation round-trip, the
+`make test` runs eight suites: the Stage A generation round-trip, the
 `SPEC` §21 raster success test, the §23 vector success test, the §44 CRS
-transform test, a suite that locks in the idiomatic layer (`gdalOpen`,
-`rasterSize`, `eachFeature`, `featureFields`, ...), a §45 raster
-write/read round-trip, and a §46 vector write/read round-trip with GEOS
-predicates and geometry transform. `make examples` runs the nine worked
-examples under `examples/`.
+transform test, a suite that locks in the idiomatic layer, a §45 raster
+write/read round-trip, a §46 vector write/read round-trip with GEOS, and
+a §47 utilities suite. `make examples` runs the ten worked examples under
+`examples/`.
 
 ## Requirements
 

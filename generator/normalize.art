@@ -24,7 +24,9 @@ gsClassifyReturn: function [gcrDesc] [
     if gcrKind = "charstarN" [ return #[disp: "DEFERRED" reason: "pointer depth"] ]
     if gcrKind = "strlist" [ return #[disp: "DEFERRED" reason: "string list return"] ]
     if gcrKind = "str" [
-        if gcrDesc\mutable [ return #[disp: "DEFERRED" reason: "owned string return"] ]
+        ; a mutable (non-const) char* is an owned string: BOUND at the
+        ; raw layer as ptr, sugar copies and frees it (SPEC 13)
+        if gcrDesc\mutable [ return #[disp: "BOUND" reason: ""] ]
         return #[disp: "BOUND" reason: ""]
     ]
     if gcrKind = "unknown" [ return #[disp: "DEFERRED" reason: "unsupported type"] ]

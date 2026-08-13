@@ -1,0 +1,50 @@
+;===========================================================
+; 10_utils.art
+;
+; The gdal_utils.h family: convert a format, reproject, convert
+; vector data, burn vector into raster, and dump dataset info —
+; all with option arrays built from plain Arturo blocks.
+;
+; Run from the repository root:
+;   arturo examples/10_utils.art
+;===========================================================
+
+import "gdal"
+
+do [
+    src: gdalOpen "examples/fixtures/map.tif"
+
+    ; GeoTIFF -> PNG (data type is downgraded to Byte by the driver)
+    png: translateDataset "/tmp/gdal_art_utils.png" src ["-of" "PNG"]
+    print ["converted to PNG:" (rasterWidth png) "x" (rasterHeight png)]
+    closeDataset png
+
+    ; reproject to UTM zone 43N
+    utm: warpDataset "/tmp/gdal_art_utils_utm.tif" src ["-t_srs" "EPSG:32643"]
+    pr: projection utm
+    print ["reprojected to UTM:" (contains? pr "UTM")]
+    closeDataset utm
+    closeDataset src
+
+    ; GeoJSON -> GPKG
+    vds: gdalOpen "examples/fixtures/points.geojson"
+    gpkg: vectorTranslateDataset "/tmp/gdal_art_utils_places.gpkg" vds ["-f" "GPKG"]
+    l: layerAt gpkg 0
+    print ["converted to GPKG:" (featureCount l) "features"]
+    closeDataset gpkg
+    closeDataset vds
+
+    ; burn the points into a raster
+    pts: gdalOpen "examples/fixtures/points.geojson"
+    burn: rasterizeDataset "/tmp/gdal_art_utils_burn.tif" pts ["-ts" "100" "100"]
+    print ["rasterized:" (rasterWidth burn) "x" (rasterHeight burn)]
+    closeDataset burn
+    closeDataset pts
+
+    ; dataset inspection
+    ids: gdalOpen "examples/fixtures/map.tif"
+    txt: infoText ids []
+    lines: split.lines txt
+    print ["info:" (lines\0)]
+    closeDataset ids
+]

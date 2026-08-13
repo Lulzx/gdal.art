@@ -38,6 +38,105 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
 
 ;------------------------------------------------------------------
+; utilities / gdal_utils.h (Stage G)
+;------------------------------------------------------------------
+
+; build a C string list (char** CSL) from a block of Arturo strings;
+; returns a pointer owned by the caller (free with cslFree)
+cslFrom: function [csfVals] [
+    csfN: size csfVals
+    csfArr: ffiAlloc ((csfN + 1) * 8)
+    csfI: 0
+    while [csfI < csfN] [
+        csfS: csfVals\[csfI]
+        csfBuf: ffiAlloc ((size csfS) + 1)
+        csfW: ffiStoreCString csfBuf csfS
+        csfP: ffiStorePtr csfArr (csfI * 8) csfBuf
+        csfI: csfI + 1
+    ]
+    csfZ: ffiStorePtr csfArr (csfN * 8) 0
+    return csfArr
+]
+
+; free a CSL built by cslFrom
+cslFree: function [cslArr] [
+    if cslArr = 0 [ return null ]
+    cslI: 0
+    cslP: ffiLoadPtr cslArr 0
+    while [not? (cslP = 0)] [
+        cslF: ffiFree cslP
+        cslI: cslI + 1
+        cslP: ffiLoadPtr cslArr (cslI * 8)
+    ]
+    cslF2: ffiFree cslArr
+]
+
+; GDALTranslate: copy / convert a dataset (options like ["-of" "PNG"])
+translateDataset: function [tdDest tdSrc tdOpts] [
+    tdR: gdalAllRegister
+    tdArg: cslFrom tdOpts
+    tdO: gdalTranslateOptionsNew tdArg null
+    tdOut: gdalTranslate tdDest tdSrc tdO null
+    tdF: gdalTranslateOptionsFree tdO
+    tdC: cslFree tdArg
+    return tdOut
+]
+
+; GDALWarp: reproject / warp one source dataset (options like
+; ["-t_srs" "EPSG:32643"])
+warpDataset: function [wdDest wdSrc wdOpts] [
+    wdR: gdalAllRegister
+    wdArg: cslFrom wdOpts
+    wdO: gdalWarpAppOptionsNew wdArg null
+    wdBuf: ffiAlloc 8
+    wdP: ffiStorePtr wdBuf 0 wdSrc
+    wdOut: gdalWarp wdDest null 1 wdBuf wdO null
+    wdF: ffiFree wdBuf
+    wdG: gdalWarpAppOptionsFree wdO
+    wdC: cslFree wdArg
+    return wdOut
+]
+
+; GDALVectorTranslate: convert / transform vector data
+vectorTranslateDataset: function [vdDest vdSrc vdOpts] [
+    vdR: gdalAllRegister
+    vdArg: cslFrom vdOpts
+    vdO: gdalVectorTranslateOptionsNew vdArg null
+    vdBuf: ffiAlloc 8
+    vdP: ffiStorePtr vdBuf 0 vdSrc
+    vdOut: gdalVectorTranslate vdDest null 1 vdBuf vdO null
+    vdF: ffiFree vdBuf
+    vdG: gdalVectorTranslateOptionsFree vdO
+    vdC: cslFree vdArg
+    return vdOut
+]
+
+; GDALRasterize: burn a vector source into a raster
+rasterizeDataset: function [rdDest rdSrc rdOpts] [
+    rdR: gdalAllRegister
+    rdArg: cslFrom rdOpts
+    rdO: gdalRasterizeOptionsNew rdArg null
+    rdOut: gdalRasterize rdDest null rdSrc rdO null
+    rdG: gdalRasterizeOptionsFree rdO
+    rdC: cslFree rdArg
+    return rdOut
+]
+
+; GDALInfo: dataset inspection text (owned char*, freed with VSIFree)
+infoText: function [itDs itOpts] [
+    itR: gdalAllRegister
+    itArg: cslFrom itOpts
+    itO: gdalInfoOptionsNew itArg null
+    itP: gdalInfo itDs itO
+    itG: gdalInfoOptionsFree itO
+    itC: cslFree itArg
+    if null? itP [ return null ]
+    itS: ffiLoadCString itP
+    itV: vsifree itP
+    return itS
+]
+
+;------------------------------------------------------------------
 ; vector creation / writing (Stage F)
 ;------------------------------------------------------------------
 

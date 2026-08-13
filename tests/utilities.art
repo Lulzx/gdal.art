@@ -1,0 +1,82 @@
+;===========================================================
+; utilities.art - gdal_utils.h (SPEC 47)
+;
+; Drive GDALTranslate, GDALWarp, GDALVectorTranslate,
+; GDALRasterize, and GDALInfo through the generated bindings with
+; option arrays built as CSL argv lists (cslFrom), and verify the
+; produced datasets.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+check: function [label got expected] [
+    if got = expected [ print ["PASS" label] ]
+    if not? (got = expected) [ print ["FAIL" label "got:" got "expected:" expected] ]
+]
+
+do [
+    ; --- format conversion: GeoTIFF -> PNG ---
+    src: gdalOpen "examples/fixtures/map.tif"
+    p1: "/tmp/gdal_art_util_translate.png"
+    execute ("rm -f " ++ p1)
+    out: translateDataset p1 src ["-of" "PNG"]
+    check "translate opens" (null? out) false
+    if not? (null? out) [
+        check "translate width" (rasterWidth out) 60
+        check "translate height" (rasterHeight out) 45
+        closeDataset out
+    ]
+
+    ; --- reprojection: EPSG:4326 -> UTM 43N ---
+    p2: "/tmp/gdal_art_util_warp.tif"
+    execute ("rm -f " ++ p2)
+    out2: warpDataset p2 src ["-t_srs" "EPSG:32643"]
+    check "warp opens" (null? out2) false
+    if not? (null? out2) [
+        pr: projection out2
+        check "warp projected" (contains? pr "UTM") true
+        closeDataset out2
+    ]
+    closeDataset src
+
+    ; --- vector conversion: GeoJSON -> GPKG ---
+    vds: gdalOpen "examples/fixtures/points.geojson"
+    p3: "/tmp/gdal_art_util_conv.gpkg"
+    execute ("rm -f " ++ p3)
+    out3: vectorTranslateDataset p3 vds ["-f" "GPKG"]
+    check "vector translate opens" (null? out3) false
+    if not? (null? out3) [
+        l3: layerAt out3 0
+        check "vector translate count" (featureCount l3) 4
+        closeDataset out3
+    ]
+    closeDataset vds
+
+    ; --- rasterize points into a 100x100 raster ---
+    pts: gdalOpen "examples/fixtures/points.geojson"
+    p4: "/tmp/gdal_art_util_burn.tif"
+    execute ("rm -f " ++ p4)
+    out4: rasterizeDataset p4 pts ["-ts" "100" "100"]
+    check "rasterize opens" (null? out4) false
+    if not? (null? out4) [
+        check "rasterize width" (rasterWidth out4) 100
+        check "rasterize height" (rasterHeight out4) 100
+        closeDataset out4
+    ]
+    closeDataset pts
+
+    ; --- dataset inspection ---
+    ids: gdalOpen "examples/fixtures/map.tif"
+    txt: infoText ids []
+    check "info non-null" (null? txt) false
+    if not? (null? txt) [
+        check "info has driver" (contains? txt "GTiff") true
+        check "info has size" (contains? txt "Size is 60, 45") true
+    ]
+    closeDataset ids
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "utilities: all tests passed" ]
+    if not? (t\failures = 0) [ panic "utilities: FAILED" ]
+]

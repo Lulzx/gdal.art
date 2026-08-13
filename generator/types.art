@@ -141,8 +141,12 @@ gsBuildType: function [gbtBaseCore gbtConst gbtPtrDepth gbtMutable gbtFnptr] [
     if gbtCore = "char" [
         if gbtPtrDepth = 1 [
             set gbtDesc "kind" "str"
-            set gbtDesc "abi" "str"
             set gbtDesc "mutable" (not? gbtConst)
+            ; a non-const char* is an OWNED string: the raw binding
+            ; returns the C pointer so the caller can free it
+            ; (CPLFree/VSIFree); const char* stays a borrowed str
+            if gbtConst [ set gbtDesc "abi" "str" ]
+            if not? gbtConst [ set gbtDesc "abi" "ptr" ]
             return gbtDesc
         ]
         if gbtPtrDepth = 2 [
