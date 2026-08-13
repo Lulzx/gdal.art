@@ -1,0 +1,80 @@
+; Harder integration cases for the public convenience layer.
+
+import "gdal"
+
+t: #[failures: 0]
+check: function [label got expected] [
+    if got = expected [ print ["PASS" label] ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+checkNull: function [label got] [
+    if null? got [ print ["PASS" label] ]
+    if not? (null? got) [
+        print ["FAIL" label "got:" got "expected null"]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    checkNull "missing dataset" (gdalOpen "/tmp/gdal_art_no_such_file")
+    checkNull "unknown raster driver" (createDataset "NO_SUCH_DRIVER" "/tmp/nope" 1 1 1 GDT_Byte)
+    checkNull "unknown vector driver" (createVectorDataset "NO_SUCH_DRIVER" "/tmp/nope")
+    checkNull "invalid SRS" (spatialReference "NOT_A_REAL_CRS")
+    checkNull "raster mode rejects vector" (openDataset "tests/fixtures/points.geojson")
+    checkNull "vector mode rejects raster" (openVector "tests/fixtures/tiny.tif")
+
+    types: @[GDT_Byte GDT_UInt16 GDT_Int16 GDT_UInt32 GDT_Int32 GDT_Float32 GDT_Float64 GDT_Int64 GDT_UInt64]
+    values: @[7 65000 (0 - 1234) 4000000000 (0 - 123456789) 1.25 (0.0 - 2.5) 5000000000 6000000000]
+    i: 0
+    while [i < (size types)] [
+        typ: types\[i]
+        value: values\[i]
+        path: "/tmp/gdal_art_type_" ++ (to :string i) ++ ".tif"
+        ds: createDataset "GTiff" path 1 1 1 typ
+        check ("create raster type " ++ (to :string typ)) (null? ds) false
+        if not? (null? ds) [
+            rc: writeBand ds 1 @[value]
+            check ("write raster type " ++ (to :string typ)) rc 0
+            closeDataset ds
+            reopened: gdalOpen path
+            got: readBand reopened 1
+            check ("read raster type " ++ (to :string typ)) got @[value]
+            closeDataset reopened
+        ]
+        i: i + 1
+    ]
+
+    ; Large enough to catch accidental quadratic collection/iteration behavior.
+    memDriver: "Memory"
+    if gdalAtLeast 3 11 0 [ memDriver: "MEM" ]
+    mem: createVectorDataset memDriver "hard_features"
+    layer: createLayer mem "many" null wkbPoint
+    check "memory layer" (null? layer) false
+    addField layer "n" OFTInteger
+    n: 0
+    while [n < 100] [
+        f: newFeature layer
+        setFieldInteger f 0 n
+        g: newPoint n (0.0 - n)
+        featureSetGeometry f g
+        createFeature layer f
+        destroyFeature f
+        destroyGeometry g
+        n: n + 1
+    ]
+    iter: #[seen: 0 checksum: 0]
+    eachFeature layer 'f [
+        iter\seen: iter\seen + 1
+        iter\checksum: iter\checksum + (to :integer (featureField f "n"))
+    ]
+    check "streamed feature count" iter\seen 100
+    check "streamed feature checksum" iter\checksum 4950
+    closeDataset mem
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "adversarial: all tests passed" ]
+    if not? (t\failures = 0) [ panic "adversarial: FAILED" ]
+]

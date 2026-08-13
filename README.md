@@ -69,7 +69,7 @@ returns are bound at the raw layer as `ptr` (the caller frees them via
 | `make native`   | build the `arturo-ffi` native adapter |
 | `make generate` | discover installed GDAL and regenerate bindings |
 | `make check`    | determinism (regenerate twice) + golden drift compare |
-| `make test`     | run the eight test suites |
+| `make test`     | run the nine test suites |
 | `make examples` | run the ten worked examples under `examples/` |
 | `make coverage` | print coverage and deferred reasons |
 
@@ -113,11 +113,13 @@ The raw generated bindings stay available and recognizable (`gdalOpenEx`,
 
 ## Tests
 
-`make test` runs eight suites: the Stage A generation round-trip, the `SPEC`
+`make test` runs nine suites: the Stage A generation round-trip, the `SPEC`
 §21 raster success test, the §23 vector success test, the §44 CRS transform
 test, a suite that locks in the idiomatic `sugar.art` layer, a §45 raster
-write/read round-trip, a §46 vector write/read round-trip with GEOS, and a
-§47 utilities suite (`tests/generation.art` through `tests/utilities.art`).
+write/read round-trip, a §46 vector write/read round-trip with GEOS, a
+§47 utilities suite, and adversarial coverage for error paths, every supported
+scalar raster type, and streaming feature iteration
+(`tests/generation.art` through `tests/adversarial.art`).
 
 `make check` regenerates twice into temp dirs and fails on drift; the golden
 compare runs only when the installed GDAL matches `GDAL_CHECK_VERSION`

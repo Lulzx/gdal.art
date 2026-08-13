@@ -286,6 +286,8 @@ writeBand: function [wbDs wbIndex wbPixels] [
         if wbT = GDT_Int32 [ wbS5: ffiStoreI32 wbBuf (wbI * 4) wbV ]
         if wbT = GDT_Float32 [ wbS6: ffiStoreF32 wbBuf (wbI * 4) wbV ]
         if wbT = GDT_Float64 [ wbS7: ffiStoreF64 wbBuf (wbI * 8) wbV ]
+        if wbT = GDT_Int64 [ wbS8: ffiStoreI64 wbBuf (wbI * 8) wbV ]
+        if wbT = GDT_UInt64 [ wbS9: ffiStoreU64 wbBuf (wbI * 8) wbV ]
         wbI: wbI + 1
     ]
     wbRc: gdalRasterIO wbB GF_Write 0 0 wbW wbH wbBuf wbW wbH wbT 0 0
@@ -334,6 +336,8 @@ bandBytes: function [bbT] [
     if bbT = GDT_Int32 [ return 4 ]
     if bbT = GDT_Float32 [ return 4 ]
     if bbT = GDT_Float64 [ return 8 ]
+    if bbT = GDT_Int64 [ return 8 ]
+    if bbT = GDT_UInt64 [ return 8 ]
     return 0
 ]
 
@@ -383,6 +387,8 @@ readBand: function [rbDs rbIndex] [
         if rbT = GDT_Int32 [ rbV: ffiLoadI32 rbBuf (rbI * 4) ]
         if rbT = GDT_Float32 [ rbV: ffiLoadF32 rbBuf (rbI * 4) ]
         if rbT = GDT_Float64 [ rbV: ffiLoadF64 rbBuf (rbI * 8) ]
+        if rbT = GDT_Int64 [ rbV: ffiLoadI64 rbBuf (rbI * 8) ]
+        if rbT = GDT_UInt64 [ rbV: ffiLoadU64 rbBuf (rbI * 8) ]
         rbV
     ]
     rbF2: ffiFree rbBuf
@@ -447,15 +453,13 @@ destroyFeature: function [dfF][ return (ogr_F_Destroy dfF) ]
 ;   ]
 eachFeature: function [efLayer efItemName efBody] [
     efR: ogr_L_ResetReading efLayer
-    efFs: []
     efF: ogr_L_GetNextFeature efLayer
     while [not? null? efF] [
-        efFs: efFs ++ @[efF]
+        ; A one-item loop gives the caller's literal its expected binding
+        ; without retaining the whole layer in memory before executing.
+        loop @[efF] efItemName [ do efBody ]
+        efK: ogr_F_Destroy efF
         efF: ogr_L_GetNextFeature efLayer
-    ]
-    loop efFs efItemName [ do efBody ]
-    loop efFs 'efKill [
-        efK: ogr_F_Destroy efKill
     ]
 ]
 
