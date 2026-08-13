@@ -4,8 +4,8 @@
 
 gdalOwnership: #[
     "GDALCreate": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "GDALClose"
     ]
     "GDALIdentifyDriver": #[
         ownership: "unknown"
@@ -40,7 +40,7 @@ gdalOwnership: #[
         release: null
     ]
     "GDALGetDatasetDriver": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALGetRasterBand": #[
@@ -64,7 +64,7 @@ gdalOwnership: #[
         release: null
     ]
     "GDALDatasetGetLayer": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "OGR_L_GetDataset": #[
@@ -72,11 +72,11 @@ gdalOwnership: #[
         release: null
     ]
     "GDALDatasetGetLayerByName": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALDatasetCreateLayer": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALDatasetCopyLayer": #[
@@ -204,8 +204,8 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_G_CreateGeometry": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "OGR_G_DestroyGeometry"
     ]
     "OGR_G_ApproximateArcAngles": #[
         ownership: "unknown"
@@ -392,8 +392,8 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_F_Create": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "OGR_F_Destroy"
     ]
     "OGR_F_GetDefnRef": #[
         ownership: "borrowed"

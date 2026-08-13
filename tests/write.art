@@ -11,7 +11,10 @@ import "gdal"
 t: #[failures: 0]
 check: function [label got expected] [
     if got = expected [ print ["PASS" label] ]
-    if not? (got = expected) [ print ["FAIL" label "got:" got "expected:" expected] ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
 ]
 
 path: "/tmp/gdal_art_roundtrip.tif"

@@ -35,8 +35,41 @@ jobs:
         run: make check
       - name: Test suite
         run: make test
+      - name: arturo-ffi adapter tests
+        run: make -C arturo-ffi test
       - name: Coverage report
         run: make coverage
+
+  # Linux x86_64, GDAL 3.8.5 — minimum supported / golden pin (SPEC 31, 50).
+  linux-3-8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Full matrix in the OSGeo GDAL 3.8 container
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            ghcr.io/osgeo/gdal:ubuntu-small-3.8.5 bash -c '
+            set -euo pipefail
+            apt-get update -qq
+            apt-get install -y -qq build-essential git pkg-config libffi-dev \
+              binutils libgtk-3-dev libmpfr-dev
+            apt-get install -y -qq libwebkit2gtk-4.1-dev \
+              || apt-get install -y -qq libwebkit2gtk-4.0-dev
+            curl -fsSL -o arturo.zip \
+              "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-linux-amd64.zip"
+            unzip -q arturo.zip -d arturo-bin
+            chmod +x arturo-bin/arturo
+            export PATH="$PWD/arturo-bin:$PATH"
+            make native
+            make generate
+            make check
+            make test
+            make -C arturo-ffi test
+            make coverage
+          '
 
   # Linux x86_64, GDAL 3.10.1 via the OSGeo GHCR image (>= min 3.8).
   # The image has no git, so checkout runs on the runner and the repo is
@@ -65,5 +98,6 @@ jobs:
             make generate
             make check
             make test
+            make -C arturo-ffi test
             make coverage
           '

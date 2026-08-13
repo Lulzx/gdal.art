@@ -41,6 +41,8 @@ do [
         g: newPoint town\x town\y
         featureSetGeometry f g
         createFeature layer f
+        destroyFeature f
+        destroyGeometry g
     ]
     closeDataset ds
     destroySpatialReference srs

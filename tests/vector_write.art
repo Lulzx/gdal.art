@@ -50,6 +50,8 @@ do [
     g1: newPoint 77.5 31.2
     featureSetGeometry f1 g1
     check "create feature 1" (createFeature layer f1) 0
+    destroyFeature f1
+    destroyGeometry g1
 
     f2: newFeature layer
     setFieldString f2 0 "pass"
@@ -58,6 +60,8 @@ do [
     g2: newPoint 77.6 31.1
     featureSetGeometry f2 g2
     check "create feature 2" (createFeature layer f2) 0
+    destroyFeature f2
+    destroyGeometry g2
 
     closeDataset ds
     destroySpatialReference srs

@@ -101,6 +101,14 @@ ffiRawCallS: function [ffSTarget ffSArgs] [
     call.external: ffiState\adapterLib .expect: :string 'adapter_call @[ffSTarget ffSArgs]
 ]
 
+; C probe library built by `make probe` (extension is OS-specific)
+ffiProbeLib: function [] [
+    ffOs: to :string (sys\os)
+    if ffOs = "Linux" [ return "tests/libcprobe.so" ]
+    if ffOs = "Windows" [ return "tests/libcprobe.dll" ]
+    return "tests/libcprobe.dylib"
+]
+
 ffiError: function [] [
     ffErrReady: ffiLoadAdapter
     call.external: ffiState\adapterLib .expect: :string 'adapter_error @[]
@@ -448,6 +456,12 @@ ffiAsBool: function [ffV] [
     return (ffV = 1)
 ]
 
+; C NULL const char* is encoded as SOH by the adapter
+ffiNullStr: function [ffnsS] [
+    if ffnsS = (to :string (to :char 1)) [ return null ]
+    return ffnsS
+]
+
 ffiDoVoid: function [ffcvT ffcvA] [
     ffiRawCall ffcvT ffcvA
     return null
@@ -467,7 +481,7 @@ ffiCall: function [ffclLib ffclSym ffclRet ffclSigs ffclArgs] [
         "bool"  -> return ((ffiRawCall ffclTarget ffclEnc) = 1)
         "int"   -> return (ffiRawCall ffclTarget ffclEnc)
         "ptr"   -> return (ffiRawCall ffclTarget ffclEnc)
-        "str"   -> return (ffiRawCallS ffclTarget ffclEnc)
+        "str"   -> return (ffiNullStr (ffiRawCallS ffclTarget ffclEnc))
         "float" -> return (to :floating (ffiRawCallS ffclTarget ffclEnc))
     ]
     return (ffiDecodeValue ffclRet (ffiRawCallS ffclTarget ffclEnc))
@@ -1042,6 +1056,1269 @@ gdalMissingSymbols: [
     "VSIInstallCachedFileHandler"
 ]
 
+; C names of generated BOUND wrappers (SPEC 29)
+gdalBoundSymbols: [
+    "GDALGetDataTypeSize"
+    "GDALGetDataTypeSizeBits"
+    "GDALGetDataTypeSizeBytes"
+    "GDALDataTypeIsComplex"
+    "GDALDataTypeIsInteger"
+    "GDALDataTypeIsFloating"
+    "GDALDataTypeIsSigned"
+    "GDALGetDataTypeName"
+    "GDALGetDataTypeByName"
+    "GDALDataTypeUnion"
+    "GDALDataTypeUnionWithValue"
+    "GDALFindDataType"
+    "GDALFindDataTypeForValue"
+    "GDALAdjustValueToDataType"
+    "GDALIsValueExactAs"
+    "GDALIsValueInRangeOf"
+    "GDALGetNonComplexDataType"
+    "GDALDataTypeIsConversionLossy"
+    "GDALGetAsyncStatusTypeName"
+    "GDALGetAsyncStatusTypeByName"
+    "GDALGetColorInterpretationName"
+    "GDALGetColorInterpretationByName"
+    "GDALGetColorInterpretationList"
+    "GDALGetPaletteInterpretationName"
+    "GDALAllRegister"
+    "GDALRegisterPlugins"
+    "GDALRegisterPlugin"
+    "GDALCreate"
+    "GDALIdentifyDriver"
+    "GDALIdentifyDriverEx"
+    "GDALOpen"
+    "GDALOpenShared"
+    "GDALOpenEx"
+    "GDALGetDriverByName"
+    "GDALGetDriverCount"
+    "GDALGetDriver"
+    "GDALCreateDriver"
+    "GDALDestroyDriver"
+    "GDALRegisterDriver"
+    "GDALDeregisterDriver"
+    "GDALDestroyDriverManager"
+    "GDALClearMemoryCaches"
+    "GDALDestroy"
+    "GDALDeleteDataset"
+    "GDALRenameDataset"
+    "GDALCopyDatasetFiles"
+    "GDALValidateCreationOptions"
+    "GDALGetOutputDriversForDatasetName"
+    "GDALDriverHasOpenOption"
+    "GDALGetDriverShortName"
+    "GDALGetDriverLongName"
+    "GDALGetDriverHelpTopic"
+    "GDALGetDriverCreationOptionList"
+    "GDALInitGCPs"
+    "GDALDeinitGCPs"
+    "GDALDuplicateGCPs"
+    "GDALGCPsToGeoTransform"
+    "GDALInvGeoTransform"
+    "GDALApplyGeoTransform"
+    "GDALComposeGeoTransforms"
+    "GDALGCPsToHomography"
+    "GDALInvHomography"
+    "GDALApplyHomography"
+    "GDALComposeHomographies"
+    "GDALGetMetadataDomainList"
+    "GDALSetMetadata"
+    "GDALGetMetadataItem"
+    "GDALSetMetadataItem"
+    "GDALGetDescription"
+    "GDALSetDescription"
+    "GDALGetDatasetDriver"
+    "GDALGetFileList"
+    "GDALDatasetMarkSuppressOnClose"
+    "GDALClose"
+    "GDALDatasetGetCloseReportsProgress"
+    "GDALDatasetRunCloseWithoutDestroying"
+    "GDALGetRasterXSize"
+    "GDALGetRasterYSize"
+    "GDALGetRasterCount"
+    "GDALGetRasterBand"
+    "GDALDatasetIsThreadSafe"
+    "GDALGetThreadSafeDataset"
+    "GDALAddBand"
+    "GDALBeginAsyncReader"
+    "GDALEndAsyncReader"
+    "GDALDatasetRasterIO"
+    "GDALDatasetRasterIOEx"
+    "GDALDatasetAdviseRead"
+    "GDALDatasetGetCompressionFormats"
+    "GDALDatasetReadCompressedData"
+    "GDALGetProjectionRef"
+    "GDALGetSpatialRef"
+    "GDALSetProjection"
+    "GDALSetSpatialRef"
+    "GDALGetGeoTransform"
+    "GDALSetGeoTransform"
+    "GDALGetExtent"
+    "GDALGetExtentWGS84LongLat"
+    "GDALDatasetGeolocationToPixelLine"
+    "GDALGetGCPCount"
+    "GDALGetGCPProjection"
+    "GDALGetGCPSpatialRef"
+    "GDALGetGCPs"
+    "GDALSetGCPs"
+    "GDALSetGCPs2"
+    "GDALGetInternalHandle"
+    "GDALReferenceDataset"
+    "GDALDereferenceDataset"
+    "GDALReleaseDataset"
+    "GDALGetOpenDatasets"
+    "GDALGetAccess"
+    "GDALFlushCache"
+    "GDALDropCache"
+    "GDALCreateDatasetMaskBand"
+    "GDALDatasetGetLayerCount"
+    "GDALDatasetGetLayer"
+    "OGR_L_GetDataset"
+    "GDALDatasetGetLayerByName"
+    "GDALDatasetIsLayerPrivate"
+    "GDALDatasetDeleteLayer"
+    "GDALDatasetCreateLayer"
+    "GDALDatasetCopyLayer"
+    "GDALDatasetResetReading"
+    "GDALDatasetTestCapability"
+    "GDALDatasetExecuteSQL"
+    "GDALDatasetAbortSQL"
+    "GDALDatasetReleaseResultSet"
+    "GDALDatasetGetStyleTable"
+    "GDALDatasetSetStyleTableDirectly"
+    "GDALDatasetSetStyleTable"
+    "GDALDatasetStartTransaction"
+    "GDALDatasetCommitTransaction"
+    "GDALDatasetRollbackTransaction"
+    "GDALDatasetClearStatistics"
+    "GDALDatasetGetFieldDomainNames"
+    "GDALDatasetDeleteFieldDomain"
+    "GDALDatasetGetRelationshipNames"
+    "GDALDatasetGetRelationship"
+    "GDALDatasetAddRelationship"
+    "GDALDatasetDeleteRelationship"
+    "GDALDatasetUpdateRelationship"
+    "GDALGetRasterDataType"
+    "GDALGetBlockSize"
+    "GDALGetActualBlockSize"
+    "GDALRasterAdviseRead"
+    "GDALRasterIO"
+    "GDALRasterIOEx"
+    "GDALReadBlock"
+    "GDALWriteBlock"
+    "GDALGetRasterBandXSize"
+    "GDALGetRasterBandYSize"
+    "GDALGetRasterAccess"
+    "GDALGetBandNumber"
+    "GDALGetBandDataset"
+    "GDALGetRasterColorInterpretation"
+    "GDALSetRasterColorInterpretation"
+    "GDALGetRasterColorTable"
+    "GDALSetRasterColorTable"
+    "GDALHasArbitraryOverviews"
+    "GDALGetOverviewCount"
+    "GDALGetOverview"
+    "GDALGetRasterNoDataValue"
+    "GDALGetRasterNoDataValueAsInt64"
+    "GDALGetRasterNoDataValueAsUInt64"
+    "GDALSetRasterNoDataValue"
+    "GDALSetRasterNoDataValueAsInt64"
+    "GDALSetRasterNoDataValueAsUInt64"
+    "GDALDeleteRasterNoDataValue"
+    "GDALGetRasterCategoryNames"
+    "GDALSetRasterCategoryNames"
+    "GDALGetRasterMinimum"
+    "GDALGetRasterMaximum"
+    "GDALGetRasterStatistics"
+    "GDALSetRasterStatistics"
+    "GDALGetRasterUnitType"
+    "GDALSetRasterUnitType"
+    "GDALGetRasterOffset"
+    "GDALSetRasterOffset"
+    "GDALGetRasterScale"
+    "GDALSetRasterScale"
+    "GDALComputeRasterMinMax"
+    "GDALComputeRasterMinMaxLocation"
+    "GDALFlushRasterCache"
+    "GDALDropRasterCache"
+    "GDALSetDefaultHistogram"
+    "GDALSetDefaultHistogramEx"
+    "GDALGetRandomRasterSample"
+    "GDALGetRasterSampleOverview"
+    "GDALGetRasterSampleOverviewEx"
+    "GDALFillRaster"
+    "GDALGetDefaultRAT"
+    "GDALSetDefaultRAT"
+    "GDALRasterInterpolateAtPoint"
+    "GDALRasterInterpolateAtGeolocation"
+    "GDALGetMaskBand"
+    "GDALGetMaskFlags"
+    "GDALCreateMaskBand"
+    "GDALIsMaskBand"
+    "GDALGetDataCoverageStatus"
+    "GDALComputedRasterBandRelease"
+    "GDALRasterBandUnaryOp"
+    "GDALRasterBandBinaryOpBand"
+    "GDALRasterBandBinaryOpDouble"
+    "GDALRasterBandBinaryOpDoubleToBand"
+    "GDALRasterBandIfThenElse"
+    "GDALRasterBandAsDataType"
+    "GDALMaximumOfNBands"
+    "GDALRasterBandMaxConstant"
+    "GDALMinimumOfNBands"
+    "GDALRasterBandMinConstant"
+    "GDALMeanOfNBands"
+    "GDALARGetNextUpdatedRegion"
+    "GDALARLockBuffer"
+    "GDALARUnlockBuffer"
+    "GDALSwapWords"
+    "GDALSwapWordsEx"
+    "GDALCopyWords"
+    "GDALCopyWords64"
+    "GDALCopyBits"
+    "GDALDeinterleave"
+    "GDALTranspose2D"
+    "GDALGetNoDataReplacementValue"
+    "GDALLoadWorldFile"
+    "GDALReadWorldFile"
+    "GDALWriteWorldFile"
+    "GDALLoadTabFile"
+    "GDALReadTabFile"
+    "GDALLoadOziMapFile"
+    "GDALReadOziMapFile"
+    "GDALDecToDMS"
+    "GDALPackedDMSToDec"
+    "GDALDecToPackedDMS"
+    "GDALVersionInfo"
+    "GDALCheckVersion"
+    "GDALExtractRPCInfoV1"
+    "GDALExtractRPCInfoV2"
+    "GDALCreateColorTable"
+    "GDALDestroyColorTable"
+    "GDALCloneColorTable"
+    "GDALGetPaletteInterpretation"
+    "GDALGetColorEntryCount"
+    "GDALGetColorEntry"
+    "GDALGetColorEntryAsRGB"
+    "GDALSetColorEntry"
+    "GDALCreateColorRamp"
+    "GDALCreateRasterAttributeTable"
+    "GDALDestroyRasterAttributeTable"
+    "GDALRATGetColumnCount"
+    "GDALRATGetNameOfCol"
+    "GDALRATGetUsageOfCol"
+    "GDALRATGetTypeOfCol"
+    "GDALGetRATFieldTypeName"
+    "GDALGetRATFieldUsageName"
+    "GDALRATGetColOfUsage"
+    "GDALRATGetRowCount"
+    "GDALRATGetValueAsString"
+    "GDALRATGetValueAsInt"
+    "GDALRATGetValueAsDouble"
+    "GDALRATGetValueAsBoolean"
+    "GDALRATGetValueAsDateTime"
+    "GDALRATGetValueAsWKBGeometry"
+    "GDALRATSetValueAsString"
+    "GDALRATSetValueAsInt"
+    "GDALRATSetValueAsDouble"
+    "GDALRATSetValueAsBoolean"
+    "GDALRATSetValueAsDateTime"
+    "GDALRATSetValueAsWKBGeometry"
+    "GDALRATChangesAreWrittenToFile"
+    "GDALRATValuesIOAsDouble"
+    "GDALRATValuesIOAsInteger"
+    "GDALRATValuesIOAsString"
+    "GDALRATValuesIOAsBoolean"
+    "GDALRATValuesIOAsDateTime"
+    "GDALRATValuesIOAsWKBGeometry"
+    "GDALRATSetRowCount"
+    "GDALRATCreateColumn"
+    "GDALRATSetLinearBinning"
+    "GDALRATGetLinearBinning"
+    "GDALRATSetTableType"
+    "GDALRATGetTableType"
+    "GDALRATInitializeFromColorTable"
+    "GDALRATTranslateToColorTable"
+    "GDALRATSerializeJSON"
+    "GDALRATGetRowOfValue"
+    "GDALRATRemoveStatistics"
+    "GDALRelationshipCreate"
+    "GDALDestroyRelationship"
+    "GDALRelationshipGetName"
+    "GDALRelationshipGetCardinality"
+    "GDALRelationshipGetLeftTableName"
+    "GDALRelationshipGetRightTableName"
+    "GDALRelationshipGetMappingTableName"
+    "GDALRelationshipSetMappingTableName"
+    "GDALRelationshipGetLeftTableFields"
+    "GDALRelationshipGetRightTableFields"
+    "GDALRelationshipSetLeftTableFields"
+    "GDALRelationshipSetRightTableFields"
+    "GDALRelationshipGetLeftMappingTableFields"
+    "GDALRelationshipGetRightMappingTableFields"
+    "GDALRelationshipSetLeftMappingTableFields"
+    "GDALRelationshipSetRightMappingTableFields"
+    "GDALRelationshipGetType"
+    "GDALRelationshipSetType"
+    "GDALRelationshipGetForwardPathLabel"
+    "GDALRelationshipSetForwardPathLabel"
+    "GDALRelationshipGetBackwardPathLabel"
+    "GDALRelationshipSetBackwardPathLabel"
+    "GDALRelationshipGetRelatedTableType"
+    "GDALRelationshipSetRelatedTableType"
+    "GDALSetCacheMax"
+    "GDALGetCacheMax"
+    "GDALGetCacheUsed"
+    "GDALSetCacheMax64"
+    "GDALGetCacheMax64"
+    "GDALGetCacheUsed64"
+    "GDALFlushCacheBlock"
+    "GDALCreatePansharpenedVRT"
+    "GDALCreateMultiDimensional"
+    "GDALExtendedDataTypeFreeComponents"
+    "GDALMDArrayGetMeshGrid"
+    "GDALMDArrayRawBlockInfoCreate"
+    "GDALMDArrayRawBlockInfoRelease"
+    "GDALReleaseArrays"
+    "GDALCreateRasterAttributeTableFromMDArrays"
+    "GDALReleaseAttributes"
+    "GDALReleaseDimensions"
+    "OGRMalloc"
+    "OGRCalloc"
+    "OGRRealloc"
+    "OGRStrdup"
+    "OGRFree"
+    "OGRGeometryTypeToName"
+    "OGRMergeGeometryTypes"
+    "OGRMergeGeometryTypesEx"
+    "OGR_GT_Flatten"
+    "OGR_GT_SetZ"
+    "OGR_GT_SetM"
+    "OGR_GT_SetModifier"
+    "OGR_GT_HasZ"
+    "OGR_GT_HasM"
+    "OGR_GT_IsSubClassOf"
+    "OGR_GT_IsCurve"
+    "OGR_GT_IsSurface"
+    "OGR_GT_IsNonLinear"
+    "OGR_GT_GetCollection"
+    "OGR_GT_GetSingle"
+    "OGR_GT_GetCurve"
+    "OGR_GT_GetLinear"
+    "OGR_GET_MS"
+    "OGRParseDate"
+    "OGRGetGEOSVersion"
+    "OGR_G_CreateFromWkb"
+    "OGR_G_CreateFromWkbEx"
+    "OGR_G_CreateFromWkt"
+    "OGR_G_CreateFromFgf"
+    "OGR_G_CreateFromEnvelope"
+    "OGR_G_DestroyGeometry"
+    "OGR_G_CreateGeometry"
+    "OGR_G_ApproximateArcAngles"
+    "OGR_G_ForceToPolygon"
+    "OGR_G_ForceToLineString"
+    "OGR_G_ForceToMultiPolygon"
+    "OGR_G_ForceToMultiPoint"
+    "OGR_G_ForceToMultiLineString"
+    "OGR_G_ForceTo"
+    "OGR_G_RemoveLowerDimensionSubGeoms"
+    "OGR_G_GetDimension"
+    "OGR_G_GetCoordinateDimension"
+    "OGR_G_CoordinateDimension"
+    "OGR_G_SetCoordinateDimension"
+    "OGR_G_Is3D"
+    "OGR_G_IsMeasured"
+    "OGR_G_Set3D"
+    "OGR_G_SetMeasured"
+    "OGR_G_Clone"
+    "OGR_G_GetEnvelope"
+    "OGR_G_GetEnvelope3D"
+    "OGR_G_ImportFromWkb"
+    "OGR_G_ExportToWkb"
+    "OGR_G_ExportToIsoWkb"
+    "OGRwkbExportOptionsCreate"
+    "OGRwkbExportOptionsDestroy"
+    "OGRwkbExportOptionsSetByteOrder"
+    "OGRwkbExportOptionsSetVariant"
+    "OGR_G_ExportToWkbEx"
+    "OGR_G_WkbSize"
+    "OGR_G_WkbSizeEx"
+    "OGR_G_ImportFromWkt"
+    "OGR_G_ExportToWkt"
+    "OGR_G_ExportToIsoWkt"
+    "OGR_G_GetGeometryType"
+    "OGR_G_GetGeometryName"
+    "OGR_G_FlattenTo2D"
+    "OGR_G_CloseRings"
+    "OGR_G_CreateFromGML"
+    "OGR_G_ExportToGML"
+    "OGR_G_ExportToGMLEx"
+    "OGR_G_ExportToKML"
+    "OGR_G_ExportToJson"
+    "OGR_G_ExportToJsonEx"
+    "OGR_G_CreateGeometryFromJson"
+    "OGR_G_CreateGeometryFromEsriJson"
+    "OGR_G_AssignSpatialReference"
+    "OGR_G_GetSpatialReference"
+    "OGR_G_Transform"
+    "OGR_G_TransformTo"
+    "OGR_G_Simplify"
+    "OGR_G_SimplifyPreserveTopology"
+    "OGR_G_DelaunayTriangulation"
+    "OGR_G_ConstrainedDelaunayTriangulation"
+    "OGR_G_Segmentize"
+    "OGR_G_Intersects"
+    "OGR_G_Equals"
+    "OGR_G_Disjoint"
+    "OGR_G_Touches"
+    "OGR_G_Crosses"
+    "OGR_G_Within"
+    "OGR_G_Contains"
+    "OGR_G_Overlaps"
+    "OGR_G_Boundary"
+    "OGR_G_ConvexHull"
+    "OGR_G_ConcaveHull"
+    "OGR_G_ConcaveHullOfPolygons"
+    "OGR_G_Buffer"
+    "OGR_G_BufferEx"
+    "OGR_G_Intersection"
+    "OGR_G_Union"
+    "OGR_G_UnionCascaded"
+    "OGR_G_UnaryUnion"
+    "OGR_G_PointOnSurface"
+    "OGR_G_Difference"
+    "OGR_G_SymDifference"
+    "OGR_G_Distance"
+    "OGR_G_Distance3D"
+    "OGR_G_Length"
+    "OGR_G_GeodesicLength"
+    "OGR_G_Area"
+    "OGR_G_GeodesicArea"
+    "OGR_G_IsClockwise"
+    "OGR_G_Centroid"
+    "OGR_G_Value"
+    "OGR_G_Empty"
+    "OGR_G_IsEmpty"
+    "OGR_G_IsValid"
+    "OGR_G_GetInvalidityReason"
+    "OGR_G_MakeValid"
+    "OGR_G_MakeValidEx"
+    "OGR_G_Normalize"
+    "OGR_G_IsSimple"
+    "OGR_G_IsRing"
+    "OGR_G_SetPrecision"
+    "OGR_G_Polygonize"
+    "OGR_G_BuildArea"
+    "OGR_G_Intersect"
+    "OGR_G_Equal"
+    "OGR_G_SymmetricDifference"
+    "OGR_G_GetArea"
+    "OGR_G_GetBoundary"
+    "OGR_G_GetPointCount"
+    "OGR_G_GetPoints"
+    "OGR_G_GetPointsZM"
+    "OGR_G_GetX"
+    "OGR_G_GetY"
+    "OGR_G_GetZ"
+    "OGR_G_GetM"
+    "OGR_G_GetPoint"
+    "OGR_G_GetPointZM"
+    "OGR_G_SetPointCount"
+    "OGR_G_SetPoint"
+    "OGR_G_SetPoint_2D"
+    "OGR_G_SetPointM"
+    "OGR_G_SetPointZM"
+    "OGR_G_AddPoint"
+    "OGR_G_AddPoint_2D"
+    "OGR_G_AddPointM"
+    "OGR_G_AddPointZM"
+    "OGR_G_SetPoints"
+    "OGR_G_SetPointsZM"
+    "OGR_G_SwapXY"
+    "OGR_G_GetGeometryCount"
+    "OGR_G_GetGeometryRef"
+    "OGR_G_AddGeometry"
+    "OGR_G_AddGeometryDirectly"
+    "OGR_G_RemoveGeometry"
+    "OGR_G_HasCurveGeometry"
+    "OGR_G_GetLinearGeometry"
+    "OGR_G_GetCurveGeometry"
+    "OGRBuildPolygonFromEdges"
+    "OGRSetGenerate_DB2_V72_BYTE_ORDER"
+    "OGRGetGenerate_DB2_V72_BYTE_ORDER"
+    "OGRSetNonLinearGeometriesEnabledFlag"
+    "OGRGetNonLinearGeometriesEnabledFlag"
+    "OGRHasPreparedGeometrySupport"
+    "OGR_Fld_Create"
+    "OGR_Fld_Destroy"
+    "OGR_Fld_SetName"
+    "OGR_Fld_GetNameRef"
+    "OGR_Fld_SetAlternativeName"
+    "OGR_Fld_GetAlternativeNameRef"
+    "OGR_Fld_GetType"
+    "OGR_Fld_SetType"
+    "OGR_Fld_GetSubType"
+    "OGR_Fld_SetSubType"
+    "OGR_Fld_GetJustify"
+    "OGR_Fld_SetJustify"
+    "OGR_Fld_GetWidth"
+    "OGR_Fld_SetWidth"
+    "OGR_Fld_GetPrecision"
+    "OGR_Fld_SetPrecision"
+    "OGR_Fld_GetTZFlag"
+    "OGR_Fld_SetTZFlag"
+    "OGR_Fld_Set"
+    "OGR_Fld_IsIgnored"
+    "OGR_Fld_SetIgnored"
+    "OGR_Fld_IsNullable"
+    "OGR_Fld_SetNullable"
+    "OGR_Fld_SetGenerated"
+    "OGR_Fld_IsGenerated"
+    "OGR_Fld_IsUnique"
+    "OGR_Fld_SetUnique"
+    "OGR_Fld_GetDefault"
+    "OGR_Fld_SetDefault"
+    "OGR_Fld_IsDefaultDriverSpecific"
+    "OGR_Fld_GetDomainName"
+    "OGR_Fld_SetDomainName"
+    "OGR_Fld_GetComment"
+    "OGR_Fld_SetComment"
+    "OGR_GetFieldTypeName"
+    "OGR_GetFieldTypeByName"
+    "OGR_GetFieldSubTypeName"
+    "OGR_GetFieldSubTypeByName"
+    "OGR_AreTypeSubTypeCompatible"
+    "OGR_FD_Create"
+    "OGR_FD_Destroy"
+    "OGR_FD_Release"
+    "OGR_FD_GetName"
+    "OGR_FD_GetFieldCount"
+    "OGR_FD_GetFieldDefn"
+    "OGR_FD_GetFieldIndex"
+    "OGR_FD_AddFieldDefn"
+    "OGR_FD_DeleteFieldDefn"
+    "OGR_FD_ReorderFieldDefns"
+    "OGR_FD_GetGeomType"
+    "OGR_FD_SetGeomType"
+    "OGR_FD_IsGeometryIgnored"
+    "OGR_FD_SetGeometryIgnored"
+    "OGR_FD_IsStyleIgnored"
+    "OGR_FD_SetStyleIgnored"
+    "OGR_FD_Reference"
+    "OGR_FD_Dereference"
+    "OGR_FD_GetReferenceCount"
+    "OGR_FD_GetGeomFieldCount"
+    "OGR_FD_GetGeomFieldIndex"
+    "OGR_FD_DeleteGeomFieldDefn"
+    "OGR_FD_IsSame"
+    "OGR_F_Create"
+    "OGR_F_Destroy"
+    "OGR_F_GetDefnRef"
+    "OGR_F_SetGeometryDirectly"
+    "OGR_F_SetGeometry"
+    "OGR_F_GetGeometryRef"
+    "OGR_F_StealGeometry"
+    "OGR_F_StealGeometryEx"
+    "OGR_F_Clone"
+    "OGR_F_Equal"
+    "OGR_F_GetFieldCount"
+    "OGR_F_GetFieldDefnRef"
+    "OGR_F_GetFieldIndex"
+    "OGR_F_IsFieldSet"
+    "OGR_F_UnsetField"
+    "OGR_F_IsFieldNull"
+    "OGR_F_IsFieldSetAndNotNull"
+    "OGR_F_SetFieldNull"
+    "OGR_F_GetRawFieldRef"
+    "OGR_RawField_IsUnset"
+    "OGR_RawField_IsNull"
+    "OGR_RawField_SetUnset"
+    "OGR_RawField_SetNull"
+    "OGR_F_GetFieldAsInteger"
+    "OGR_F_GetFieldAsInteger64"
+    "OGR_F_GetFieldAsDouble"
+    "OGR_F_GetFieldAsString"
+    "OGR_F_GetFieldAsISO8601DateTime"
+    "OGR_F_GetFieldAsIntegerList"
+    "OGR_F_GetFieldAsInteger64List"
+    "OGR_F_GetFieldAsDoubleList"
+    "OGR_F_GetFieldAsStringList"
+    "OGR_F_GetFieldAsBinary"
+    "OGR_F_GetFieldAsDateTime"
+    "OGR_F_GetFieldAsDateTimeEx"
+    "OGR_F_SetFieldInteger"
+    "OGR_F_SetFieldInteger64"
+    "OGR_F_SetFieldDouble"
+    "OGR_F_SetFieldString"
+    "OGR_F_SetFieldIntegerList"
+    "OGR_F_SetFieldInteger64List"
+    "OGR_F_SetFieldDoubleList"
+    "OGR_F_SetFieldStringList"
+    "OGR_F_SetFieldRaw"
+    "OGR_F_SetFieldBinary"
+    "OGR_F_SetFieldDateTime"
+    "OGR_F_SetFieldDateTimeEx"
+    "OGR_F_GetGeomFieldCount"
+    "OGR_F_GetGeomFieldIndex"
+    "OGR_F_GetGeomFieldRef"
+    "OGR_F_SetGeomFieldDirectly"
+    "OGR_F_SetGeomField"
+    "OGR_F_GetFID"
+    "OGR_F_SetFID"
+    "OGR_F_DumpReadableAsString"
+    "OGR_F_SetFrom"
+    "OGR_F_SetFromWithMap"
+    "OGR_F_GetStyleString"
+    "OGR_F_SetStyleString"
+    "OGR_F_GetStyleTable"
+    "OGR_F_SetStyleTableDirectly"
+    "OGR_F_SetStyleTable"
+    "OGR_F_GetNativeData"
+    "OGR_F_SetNativeData"
+    "OGR_F_GetNativeMediaType"
+    "OGR_F_SetNativeMediaType"
+    "OGR_F_FillUnsetWithDefault"
+    "OGR_F_Validate"
+    "OGR_L_GetName"
+    "OGR_L_GetGeomType"
+    "OGR_L_GetSpatialFilter"
+    "OGR_L_SetSpatialFilter"
+    "OGR_L_SetSpatialFilterRect"
+    "OGR_L_SetSpatialFilterEx"
+    "OGR_L_SetSpatialFilterRectEx"
+    "OGR_L_SetAttributeFilter"
+    "OGR_L_GetAttributeFilter"
+    "OGR_L_ResetReading"
+    "OGR_L_GetNextFeature"
+    "OGR_L_GetArrowStream"
+    "OGR_L_IsArrowSchemaSupported"
+    "OGR_L_CreateFieldFromArrowSchema"
+    "OGR_L_WriteArrowBatch"
+    "OGR_L_SetNextByIndex"
+    "OGR_L_GetFeature"
+    "OGR_L_SetFeature"
+    "OGR_L_CreateFeature"
+    "OGR_L_DeleteFeature"
+    "OGR_L_UpsertFeature"
+    "OGR_L_UpdateFeature"
+    "OGR_L_GetLayerDefn"
+    "OGR_L_GetSpatialRef"
+    "OGR_L_GetSupportedSRSList"
+    "OGR_L_SetActiveSRS"
+    "OGR_L_FindFieldIndex"
+    "OGR_L_GetFeatureCount"
+    "OGR_L_GetExtent"
+    "OGR_L_GetExtentEx"
+    "OGR_L_GetExtent3D"
+    "OGR_L_TestCapability"
+    "OGR_L_CreateField"
+    "OGR_L_DeleteField"
+    "OGR_L_ReorderFields"
+    "OGR_L_ReorderField"
+    "OGR_L_AlterFieldDefn"
+    "OGR_L_StartTransaction"
+    "OGR_L_CommitTransaction"
+    "OGR_L_RollbackTransaction"
+    "OGR_L_Rename"
+    "OGR_L_Reference"
+    "OGR_L_Dereference"
+    "OGR_L_GetRefCount"
+    "OGR_L_SyncToDisk"
+    "OGR_L_GetFeaturesRead"
+    "OGR_L_GetFIDColumn"
+    "OGR_L_GetGeometryColumn"
+    "OGR_L_GetStyleTable"
+    "OGR_L_SetStyleTableDirectly"
+    "OGR_L_SetStyleTable"
+    "OGR_L_SetIgnoredFields"
+    "OGR_DS_Destroy"
+    "OGR_DS_GetName"
+    "OGR_DS_GetLayerCount"
+    "OGR_DS_GetLayer"
+    "OGR_DS_GetLayerByName"
+    "OGR_DS_DeleteLayer"
+    "OGR_DS_GetDriver"
+    "OGR_DS_CreateLayer"
+    "OGR_DS_CopyLayer"
+    "OGR_DS_TestCapability"
+    "OGR_DS_ExecuteSQL"
+    "OGR_DS_ReleaseResultSet"
+    "OGR_DS_Reference"
+    "OGR_DS_Dereference"
+    "OGR_DS_GetRefCount"
+    "OGR_DS_GetSummaryRefCount"
+    "OGR_DS_SyncToDisk"
+    "OGR_DS_GetStyleTable"
+    "OGR_DS_SetStyleTableDirectly"
+    "OGR_DS_SetStyleTable"
+    "OGR_Dr_GetName"
+    "OGR_Dr_Open"
+    "OGR_Dr_TestCapability"
+    "OGR_Dr_CreateDataSource"
+    "OGR_Dr_CopyDataSource"
+    "OGR_Dr_DeleteDataSource"
+    "OGROpen"
+    "OGROpenShared"
+    "OGRReleaseDataSource"
+    "OGRRegisterDriver"
+    "OGRDeregisterDriver"
+    "OGRGetDriverCount"
+    "OGRGetDriver"
+    "OGRGetDriverByName"
+    "OGRGetOpenDSCount"
+    "OGRGetOpenDS"
+    "OGRRegisterAll"
+    "OGRCleanupAll"
+    "OGR_SM_Create"
+    "OGR_SM_Destroy"
+    "OGR_SM_InitFromFeature"
+    "OGR_SM_InitStyleString"
+    "OGR_SM_GetPartCount"
+    "OGR_SM_GetPart"
+    "OGR_SM_AddPart"
+    "OGR_SM_AddStyle"
+    "OGR_ST_Create"
+    "OGR_ST_Destroy"
+    "OGR_ST_GetType"
+    "OGR_ST_GetUnit"
+    "OGR_ST_SetUnit"
+    "OGR_ST_GetParamStr"
+    "OGR_ST_GetParamNum"
+    "OGR_ST_GetParamDbl"
+    "OGR_ST_SetParamStr"
+    "OGR_ST_SetParamNum"
+    "OGR_ST_SetParamDbl"
+    "OGR_ST_GetStyleString"
+    "OGR_ST_GetRGBFromString"
+    "OGR_STBL_Create"
+    "OGR_STBL_Destroy"
+    "OGR_STBL_AddStyle"
+    "OGR_STBL_SaveStyleTable"
+    "OGR_STBL_LoadStyleTable"
+    "OGR_STBL_Find"
+    "OGR_STBL_ResetStyleStringReading"
+    "OGR_STBL_GetNextStyle"
+    "OGR_STBL_GetLastStyleName"
+    "OSRAxisEnumToName"
+    "OSRSetPROJSearchPaths"
+    "OSRGetPROJSearchPaths"
+    "OSRSetPROJAuxDbPaths"
+    "OSRGetPROJAuxDbPaths"
+    "OSRSetPROJEnableNetwork"
+    "OSRGetPROJEnableNetwork"
+    "OSRGetPROJVersion"
+    "OSRNewSpatialReference"
+    "OSRCloneGeogCS"
+    "OSRClone"
+    "OSRDestroySpatialReference"
+    "OSRReference"
+    "OSRDereference"
+    "OSRRelease"
+    "OSRValidate"
+    "OSRImportFromEPSG"
+    "OSRImportFromEPSGA"
+    "OSRImportFromWkt"
+    "OSRImportFromProj4"
+    "OSRImportFromESRI"
+    "OSRImportFromPCI"
+    "OSRImportFromUSGS"
+    "OSRImportFromXML"
+    "OSRImportFromDict"
+    "OSRImportFromPanorama"
+    "OSRImportFromOzi"
+    "OSRImportFromMICoordSys"
+    "OSRImportFromERM"
+    "OSRImportFromUrl"
+    "OSRImportFromCF1"
+    "OSRExportToWkt"
+    "OSRExportToWktEx"
+    "OSRExportToPrettyWkt"
+    "OSRExportToPROJJSON"
+    "OSRExportToProj4"
+    "OSRExportToPCI"
+    "OSRExportToUSGS"
+    "OSRExportToXML"
+    "OSRExportToPanorama"
+    "OSRExportToMICoordSys"
+    "OSRMorphToESRI"
+    "OSRMorphFromESRI"
+    "OSRStripVertical"
+    "OSRConvertToOtherProjection"
+    "OSRGetName"
+    "OSRGetCelestialBodyName"
+    "OSRSetAttrValue"
+    "OSRGetAttrValue"
+    "OSRSetAngularUnits"
+    "OSRGetAngularUnits"
+    "OSRSetLinearUnits"
+    "OSRSetTargetLinearUnits"
+    "OSRSetLinearUnitsAndUpdateParameters"
+    "OSRGetLinearUnits"
+    "OSRGetTargetLinearUnits"
+    "OSRGetPrimeMeridian"
+    "OSRIsGeographic"
+    "OSRIsDerivedGeographic"
+    "OSRIsLocal"
+    "OSRIsProjected"
+    "OSRIsDerivedProjected"
+    "OSRIsCompound"
+    "OSRIsGeocentric"
+    "OSRIsVertical"
+    "OSRIsDynamic"
+    "OSRHasPointMotionOperation"
+    "OSRIsSameGeogCS"
+    "OSRIsSameVertCS"
+    "OSRIsSame"
+    "OSRIsSameEx"
+    "OSRSetCoordinateEpoch"
+    "OSRGetCoordinateEpoch"
+    "OSRSetLocalCS"
+    "OSRSetProjCS"
+    "OSRSetGeocCS"
+    "OSRSetWellKnownGeogCS"
+    "OSRSetFromUserInput"
+    "OSRSetFromUserInputEx"
+    "OSRCopyGeogCSFrom"
+    "OSRSetTOWGS84"
+    "OSRGetTOWGS84"
+    "OSRAddGuessedTOWGS84"
+    "OSRSetCompoundCS"
+    "OSRPromoteTo3D"
+    "OSRDemoteTo2D"
+    "OSRSetGeogCS"
+    "OSRSetVertCS"
+    "OSRGetSemiMajor"
+    "OSRGetSemiMinor"
+    "OSRGetInvFlattening"
+    "OSRSetAuthority"
+    "OSRGetAuthorityCode"
+    "OSRGetAuthorityName"
+    "OSRGetAreaOfUse"
+    "OSRSetProjection"
+    "OSRSetProjParm"
+    "OSRGetProjParm"
+    "OSRSetNormProjParm"
+    "OSRGetNormProjParm"
+    "OSRSetUTM"
+    "OSRGetUTMZone"
+    "OSRSetStatePlane"
+    "OSRSetStatePlaneWithUnits"
+    "OSRAutoIdentifyEPSG"
+    "OSRFindMatches"
+    "OSRFreeSRSArray"
+    "OSREPSGTreatsAsLatLong"
+    "OSREPSGTreatsAsNorthingEasting"
+    "OSRGetAxis"
+    "OSRGetAxesCount"
+    "OSRSetAxes"
+    "OSRGetAxisMappingStrategy"
+    "OSRSetAxisMappingStrategy"
+    "OSRGetDataAxisToSRSAxisMapping"
+    "OSRSetDataAxisToSRSAxisMapping"
+    "OSRSetACEA"
+    "OSRSetAE"
+    "OSRSetBonne"
+    "OSRSetCEA"
+    "OSRSetCS"
+    "OSRSetEC"
+    "OSRSetEckert"
+    "OSRSetEckertIV"
+    "OSRSetEckertVI"
+    "OSRSetEquirectangular"
+    "OSRSetEquirectangular2"
+    "OSRSetGS"
+    "OSRSetGH"
+    "OSRSetIGH"
+    "OSRSetGEOS"
+    "OSRSetGaussSchreiberTMercator"
+    "OSRSetGnomonic"
+    "OSRSetHOM"
+    "OSRSetHOMAC"
+    "OSRSetHOM2PNO"
+    "OSRSetIWMPolyconic"
+    "OSRSetKrovak"
+    "OSRSetLAEA"
+    "OSRSetLCC"
+    "OSRSetLCC1SP"
+    "OSRSetLCCB"
+    "OSRSetMC"
+    "OSRSetMercator"
+    "OSRSetMercator2SP"
+    "OSRSetMollweide"
+    "OSRSetNZMG"
+    "OSRSetOS"
+    "OSRSetOrthographic"
+    "OSRSetPolyconic"
+    "OSRSetPS"
+    "OSRSetRobinson"
+    "OSRSetSinusoidal"
+    "OSRSetStereographic"
+    "OSRSetSOC"
+    "OSRSetTM"
+    "OSRSetTMVariant"
+    "OSRSetTMG"
+    "OSRSetTMSO"
+    "OSRSetTPED"
+    "OSRSetVDG"
+    "OSRSetWagner"
+    "OSRSetQSC"
+    "OSRSetSCH"
+    "OSRSetVerticalPerspective"
+    "OSRCalcInvFlattening"
+    "OSRCalcSemiMinorFromInvFlattening"
+    "OSRCleanup"
+    "OSRGetCRSInfoListFromDatabase"
+    "OSRDestroyCRSInfoList"
+    "OSRGetAuthorityListFromDatabase"
+    "OCTNewCoordinateTransformation"
+    "OCTClone"
+    "OCTGetSourceCS"
+    "OCTGetTargetCS"
+    "OCTGetInverse"
+    "OCTDestroyCoordinateTransformation"
+    "OCTTransform"
+    "OCTTransformEx"
+    "OCTTransform4D"
+    "OCTTransform4DWithErrorCodes"
+    "OCTTransformBounds"
+    "CPLEmergencyError"
+    "CPLErrorReset"
+    "CPLGetLastErrorNo"
+    "CPLGetLastErrorType"
+    "CPLGetLastErrorMsg"
+    "CPLGetErrorCounter"
+    "CPLGetErrorHandlerUserData"
+    "CPLErrorSetState"
+    "CPLCallPreviousHandler"
+    "CPLCleanupErrorMutex"
+    "CPLLoggingErrorHandler"
+    "CPLDefaultErrorHandler"
+    "CPLQuietErrorHandler"
+    "CPLQuietWarningsErrorHandler"
+    "CPLTurnFailureIntoWarning"
+    "CPLSetCurrentErrorHandlerCatchDebug"
+    "CPLPopErrorHandler"
+    "_CPLAssert"
+    "CPLVerifyConfiguration"
+    "CPLIsDebugEnabled"
+    "CPLGetConfigOption"
+    "CPLGetThreadLocalConfigOption"
+    "CPLGetGlobalConfigOption"
+    "CPLSetConfigOption"
+    "CPLSetThreadLocalConfigOption"
+    "CPLDeclareKnownConfigOption"
+    "CPLGetKnownConfigOptions"
+    "CPLUnsubscribeToSetConfigOption"
+    "CPLFreeConfig"
+    "CPLGetConfigOptions"
+    "CPLSetConfigOptions"
+    "CPLGetThreadLocalConfigOptions"
+    "CPLSetThreadLocalConfigOptions"
+    "CPLLoadConfigOptionsFromFile"
+    "CPLLoadConfigOptionsFromPredefinedFiles"
+    "CPLMalloc"
+    "CPLCalloc"
+    "CPLRealloc"
+    "CPLStrdup"
+    "CPLReadLineL"
+    "CPLReadLine2L"
+    "CPLReadLine3L"
+    "CPLAtof"
+    "CPLStrtod"
+    "CPLStrtodM"
+    "CPLStrtof"
+    "CPLAtofM"
+    "CPLScanString"
+    "CPLScanDouble"
+    "CPLScanLong"
+    "CPLScanULong"
+    "CPLScanUIntBig"
+    "CPLAtoGIntBig"
+    "CPLAtoGIntBigEx"
+    "CPLScanPointer"
+    "CPLGetSymbol"
+    "CPLGetPath"
+    "CPLGetDirname"
+    "CPLGetBasename"
+    "CPLGetExtension"
+    "CPLFormFilename"
+    "CPLFormCIFilename"
+    "CPLResetExtension"
+    "CPLProjectRelativeFilename"
+    "CPLCleanTrailingSlash"
+    "CPLGenerateTempFilename"
+    "CPLExpandTilde"
+    "CPLLaunderForFilename"
+    "CPLGetCurrentDir"
+    "CPLGetFilename"
+    "CPLIsFilenameRelative"
+    "CPLExtractRelativePath"
+    "CPLCorrespondingPaths"
+    "CPLGetHomeDir"
+    "CPLHasPathTraversal"
+    "CPLHasUnbalancedPathTraversal"
+    "CPLFindFile"
+    "CPLDefaultFindFile"
+    "CPLPushFinderLocation"
+    "CPLPopFinderLocation"
+    "CPLFinderClean"
+    "CPLStat"
+    "CPLGetSharedList"
+    "CPLCleanupSharedFileMutex"
+    "CPLDMSToDec"
+    "CPLDecToDMS"
+    "CPLPackedDMSToDec"
+    "CPLDecToPackedDMS"
+    "CPLStringToComplex"
+    "CPLUnlinkTree"
+    "CPLCopyFile"
+    "CPLCopyTree"
+    "CPLMoveFile"
+    "CPLSymlink"
+    "CPLGetRemainingFileDescriptorCount"
+    "CPLLockFileEx"
+    "CPLCreateZip"
+    "CPLCreateFileInZip"
+    "CPLWriteFileInZip"
+    "CPLCloseFileInZip"
+    "CPLCloseZip"
+    "CPLZLibDeflate"
+    "CPLZLibInflate"
+    "CPLZLibInflateEx"
+    "CPLValidateXML"
+    "CPLsetlocale"
+    "CPLCleanupSetlocaleMutex"
+    "CPLIsPowerOfTwo"
+    "CSLAddString"
+    "CSLAddStringMayFail"
+    "CSLCount"
+    "CSLGetField"
+    "CSLDestroy"
+    "CSLDuplicate"
+    "CSLMerge"
+    "CSLTokenizeString"
+    "CSLTokenizeStringComplex"
+    "CSLTokenizeString2"
+    "CSLLoad"
+    "CSLLoad2"
+    "CSLSave"
+    "CSLInsertStrings"
+    "CSLInsertString"
+    "CSLFindString"
+    "CSLFindStringCaseSensitive"
+    "CSLPartialFindString"
+    "CSLFindName"
+    "CSLFetchBoolean"
+    "CSLTestBoolean"
+    "CPLTestBoolean"
+    "CPLTestBool"
+    "CPLFetchBool"
+    "CPLParseMemorySize"
+    "CPLParseNameValue"
+    "CSLFetchNameValue"
+    "CSLFetchNameValueDef"
+    "CSLFetchNameValueMultiple"
+    "CSLAddNameValue"
+    "CSLSetNameValue"
+    "CSLSetNameValueSeparator"
+    "CSLParseCommandLine"
+    "CPLEscapeString"
+    "CPLUnescapeString"
+    "CPLBinaryToHex"
+    "CPLHexToBinary"
+    "CPLBase64Encode"
+    "CPLBase64DecodeInPlace"
+    "CPLGetValueType"
+    "CPLToupper"
+    "CPLTolower"
+    "CPLStrnlen"
+    "CPLEncodingCharSize"
+    "CPLClearRecodeWarningFlags"
+    "CPLRecode"
+    "CPLRecodeFromWChar"
+    "CPLRecodeToWChar"
+    "CPLIsUTF8"
+    "CPLIsASCII"
+    "CPLStrlenUTF8"
+    "CPLStrlenUTF8Ex"
+    "CPLCanRecode"
+    "VSIStat"
+    "VSIFOpenL"
+    "VSIFOpenExL"
+    "VSIFOpenEx2L"
+    "VSIFCloseL"
+    "VSIFSeekL"
+    "VSIFTellL"
+    "VSIRewindL"
+    "VSIFReadL"
+    "VSIFReadMultiRangeL"
+    "VSIFWriteL"
+    "VSIFClearErrL"
+    "VSIFErrorL"
+    "VSIFEofL"
+    "VSIFTruncateL"
+    "VSIFFlushL"
+    "VSIFPutcL"
+    "VSIFGetRangeStatusL"
+    "VSIIngestFile"
+    "VSIOverwriteFile"
+    "VSIIsCaseSensitiveFS"
+    "VSISupportsSparseFiles"
+    "VSIIsLocal"
+    "VSIGetCanonicalFilename"
+    "VSISupportsSequentialWrite"
+    "VSISupportsRandomWrite"
+    "VSIHasOptimizedReadMultiRange"
+    "VSIGetActualURL"
+    "VSIGetSignedURL"
+    "VSIGetFileSystemOptions"
+    "VSIGetFileSystemsPrefixes"
+    "VSIFGetNativeFileDescriptorL"
+    "VSIGetFileMetadata"
+    "VSISetFileMetadata"
+    "VSISetPathSpecificOption"
+    "VSIClearPathSpecificOptions"
+    "VSIGetPathSpecificOption"
+    "VSISetCredential"
+    "VSIClearCredentials"
+    "VSIGetCredential"
+    "VSICalloc"
+    "VSIMalloc"
+    "VSIFree"
+    "VSIRealloc"
+    "VSIStrdup"
+    "VSIMallocAligned"
+    "VSIMallocAlignedAuto"
+    "VSIFreeAligned"
+    "VSIMallocAlignedAutoVerbose"
+    "VSIMalloc2"
+    "VSIMalloc3"
+    "VSIMallocVerbose"
+    "VSIMalloc2Verbose"
+    "VSIMalloc3Verbose"
+    "VSICallocVerbose"
+    "VSIReallocVerbose"
+    "VSIStrdupVerbose"
+    "CPLGetPhysicalRAM"
+    "CPLGetUsablePhysicalRAM"
+    "VSIReadDir"
+    "VSIReadDirRecursive"
+    "VSIReadDirEx"
+    "VSISiblingFiles"
+    "VSIGetDirectorySeparator"
+    "VSIOpenDir"
+    "VSIGetNextDirEntry"
+    "VSICloseDir"
+    "VSIMkdir"
+    "VSIMkdirRecursive"
+    "VSIRmdir"
+    "VSIRmdirRecursive"
+    "VSIUnlink"
+    "VSIUnlinkBatch"
+    "VSIRename"
+    "VSIMultipartUploadGetCapabilities"
+    "VSIMultipartUploadStart"
+    "VSIMultipartUploadAddPart"
+    "VSIMultipartUploadEnd"
+    "VSIMultipartUploadAbort"
+    "VSIAbortPendingUploads"
+    "VSIStrerror"
+    "VSIGetDiskFreeSpace"
+    "VSINetworkStatsReset"
+    "VSINetworkStatsGetAsSerializedJSON"
+    "VSIInstallMemFileHandler"
+    "VSIInstallLargeFileHandler"
+    "VSIInstallSubFileHandler"
+    "VSIInstallCurlFileHandler"
+    "VSICurlClearCache"
+    "VSICurlPartialClearCache"
+    "VSIInstallCurlStreamingFileHandler"
+    "VSIInstallS3FileHandler"
+    "VSIInstallS3StreamingFileHandler"
+    "VSIInstallGSFileHandler"
+    "VSIInstallGSStreamingFileHandler"
+    "VSIInstallAzureFileHandler"
+    "VSIInstallAzureStreamingFileHandler"
+    "VSIInstallADLSFileHandler"
+    "VSIInstallOSSFileHandler"
+    "VSIInstallOSSStreamingFileHandler"
+    "VSIInstallSwiftFileHandler"
+    "VSIInstallSwiftStreamingFileHandler"
+    "VSIInstall7zFileHandler"
+    "VSIInstallRarFileHandler"
+    "VSIInstallGZipFileHandler"
+    "VSIInstallZipFileHandler"
+    "VSIInstallStdinHandler"
+    "VSIInstallHdfsHandler"
+    "VSIInstallWebHdfsHandler"
+    "VSIInstallStdoutHandler"
+    "VSIInstallSparseFileHandler"
+    "VSIInstallTarFileHandler"
+    "VSIInstallCachedFileHandler"
+    "VSIInstallCryptFileHandler"
+    "VSISetCryptKey"
+    "VSICleanupFileManager"
+    "VSIDuplicateFileSystemHandler"
+    "VSIFileFromMemBuffer"
+    "VSIGetMemFileBuffer"
+    "VSIMemGenerateHiddenFilename"
+    "VSIAllocFilesystemPluginCallbacksStruct"
+    "VSIFreeFilesystemPluginCallbacksStruct"
+    "VSIInstallPluginHandler"
+    "VSIRemovePluginHandler"
+    "VSITime"
+    "VSICTime"
+    "GDALInfoOptionsNew"
+    "GDALInfoOptionsFree"
+    "GDALInfo"
+    "GDALTranslateOptionsNew"
+    "GDALTranslateOptionsFree"
+    "GDALTranslate"
+    "GDALWarpAppOptionsNew"
+    "GDALWarpAppOptionsFree"
+    "GDALWarpAppOptionsSetQuiet"
+    "GDALWarpAppOptionsSetWarpOption"
+    "GDALWarp"
+    "GDALVectorTranslateOptionsNew"
+    "GDALVectorTranslateOptionsFree"
+    "GDALVectorTranslate"
+    "GDALDEMProcessingOptionsNew"
+    "GDALDEMProcessingOptionsFree"
+    "GDALDEMProcessing"
+    "GDALNearblackOptionsNew"
+    "GDALNearblackOptionsFree"
+    "GDALNearblack"
+    "GDALGridOptionsNew"
+    "GDALGridOptionsFree"
+    "GDALGrid"
+    "GDALContourOptionsNew"
+    "GDALContourOptionsFree"
+    "GDALContourOptionsSetDestDataSource"
+    "GDALRasterizeOptionsNew"
+    "GDALRasterizeOptionsFree"
+    "GDALRasterize"
+    "GDALFootprintOptionsNew"
+    "GDALFootprintOptionsFree"
+    "GDALFootprint"
+    "GDALBuildVRTOptionsNew"
+    "GDALBuildVRTOptionsFree"
+    "GDALBuildVRT"
+    "GDALMultiDimInfoOptionsNew"
+    "GDALMultiDimInfoOptionsFree"
+    "GDALMultiDimInfo"
+    "GDALMultiDimTranslateOptionsNew"
+    "GDALMultiDimTranslateOptionsFree"
+    "GDALMultiDimTranslate"
+    "GDALVectorInfoOptionsNew"
+    "GDALVectorInfoOptionsFree"
+    "GDALVectorInfo"
+    "GDALTileIndexOptionsNew"
+    "GDALTileIndexOptionsFree"
+    "GDALTileIndex"
+]
+
 ; DO NOT EDIT
 ; Generated constants (enums + #define) from the installed GDAL headers.
 
@@ -1497,6 +2774,8 @@ wkbXDR: 0
 
 ; map a C NULL pointer (integer 0) to Arturo null (SPEC 16)
 gdalNullIf: function [gdnP][ if gdnP = 0 [ return null ] return gdnP ]
+; map a C NULL const char* (adapter sentinel SOH) to Arturo null
+gdalNullStr: function [gdnS][ if gdnS = (to :string (to :char 1)) [ return null ] return gdnS ]
 
 ; raw bindings (1:1 with the C API)
 
@@ -1529,7 +2808,7 @@ gdalDataTypeIsSigned: function [a0][
 ]
 
 gdalGetDataTypeName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDataTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDataTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalGetDataTypeByName: function [a0][
@@ -1573,7 +2852,7 @@ gdalDataTypeIsConversionLossy: function [a0 a1][
 ]
 
 gdalGetAsyncStatusTypeName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetAsyncStatusTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetAsyncStatusTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalGetAsyncStatusTypeByName: function [a0][
@@ -1581,7 +2860,7 @@ gdalGetAsyncStatusTypeByName: function [a0][
 ]
 
 gdalGetColorInterpretationName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetColorInterpretationName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetColorInterpretationName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalGetColorInterpretationByName: function [a0][
@@ -1593,7 +2872,7 @@ gdalGetColorInterpretationList: function [a0][
 ]
 
 gdalGetPaletteInterpretationName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetPaletteInterpretationName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetPaletteInterpretationName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalAllRegister: function [][
@@ -1697,19 +2976,19 @@ gdalDriverHasOpenOption: function [a0 a1][
 ]
 
 gdalGetDriverShortName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverShortName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverShortName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetDriverLongName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverLongName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverLongName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetDriverHelpTopic: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverHelpTopic|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverHelpTopic|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetDriverCreationOptionList: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverCreationOptionList|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDriverCreationOptionList|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalInitGCPs: function [a0 a1][
@@ -1765,7 +3044,7 @@ gdalSetMetadata: function [a0 a1 a2][
 ]
 
 gdalGetMetadataItem: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetMetadataItem|str|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetMetadataItem|str|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2])))
 ]
 
 gdalSetMetadataItem: function [a0 a1 a2 a3][
@@ -1773,7 +3052,7 @@ gdalSetMetadataItem: function [a0 a1 a2 a3][
 ]
 
 gdalGetDescription: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDescription|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDescription|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalSetDescription: function [a0 a1][
@@ -1861,7 +3140,7 @@ gdalDatasetReadCompressedData: function [a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10][
 ]
 
 gdalGetProjectionRef: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetProjectionRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetProjectionRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetSpatialRef: function [a0][
@@ -1901,7 +3180,7 @@ gdalGetGCPCount: function [a0][
 ]
 
 gdalGetGCPProjection: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetGCPProjection|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetGCPProjection|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetGCPSpatialRef: function [a0][
@@ -2197,7 +3476,7 @@ gdalSetRasterStatistics: function [a0 a1 a2 a3 a4][
 ]
 
 gdalGetRasterUnitType: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRasterUnitType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRasterUnitType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalSetRasterUnitType: function [a0 a1][
@@ -2417,7 +3696,7 @@ gdalReadOziMapFile: function [a0 a1 a2 a3 a4][
 ]
 
 gdalDecToDMS: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDecToDMS|str|f64,str,i32" (ffiEncodeArgs ["f64" "str" "i32"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDecToDMS|str|f64,str,i32" (ffiEncodeArgs ["f64" "str" "i32"] @[a0 a1 a2])))
 ]
 
 gdalPackedDMSToDec: function [a0][
@@ -2429,7 +3708,7 @@ gdalDecToPackedDMS: function [a0][
 ]
 
 gdalVersionInfo: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALVersionInfo|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALVersionInfo|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 gdalCheckVersion: function [a0 a1 a2][
@@ -2493,7 +3772,7 @@ gdalRATGetColumnCount: function [a0][
 ]
 
 gdalRATGetNameOfCol: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATGetNameOfCol|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATGetNameOfCol|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1])))
 ]
 
 gdalRATGetUsageOfCol: function [a0 a1][
@@ -2505,11 +3784,11 @@ gdalRATGetTypeOfCol: function [a0 a1][
 ]
 
 gdalGetRATFieldTypeName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRATFieldTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRATFieldTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalGetRATFieldUsageName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRATFieldUsageName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRATFieldUsageName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 gdalRATGetColOfUsage: function [a0 a1][
@@ -2521,7 +3800,7 @@ gdalRATGetRowCount: function [a0][
 ]
 
 gdalRATGetValueAsString: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATGetValueAsString|str|ptr,i32,i32" (ffiEncodeArgs ["ptr" "i32" "i32"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATGetValueAsString|str|ptr,i32,i32" (ffiEncodeArgs ["ptr" "i32" "i32"] @[a0 a1 a2])))
 ]
 
 gdalRATGetValueAsInt: function [a0 a1 a2][
@@ -2649,7 +3928,7 @@ gdalDestroyRelationship: function [a0][
 ]
 
 gdalRelationshipGetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipGetCardinality: function [a0][
@@ -2657,15 +3936,15 @@ gdalRelationshipGetCardinality: function [a0][
 ]
 
 gdalRelationshipGetLeftTableName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetLeftTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetLeftTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipGetRightTableName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRightTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRightTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipGetMappingTableName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetMappingTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetMappingTableName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipSetMappingTableName: function [a0 a1][
@@ -2713,7 +3992,7 @@ gdalRelationshipSetType: function [a0 a1][
 ]
 
 gdalRelationshipGetForwardPathLabel: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetForwardPathLabel|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetForwardPathLabel|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipSetForwardPathLabel: function [a0 a1][
@@ -2721,7 +4000,7 @@ gdalRelationshipSetForwardPathLabel: function [a0 a1][
 ]
 
 gdalRelationshipGetBackwardPathLabel: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetBackwardPathLabel|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetBackwardPathLabel|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipSetBackwardPathLabel: function [a0 a1][
@@ -2729,7 +4008,7 @@ gdalRelationshipSetBackwardPathLabel: function [a0 a1][
 ]
 
 gdalRelationshipGetRelatedTableType: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRelatedTableType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRelatedTableType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipSetRelatedTableType: function [a0 a1][
@@ -2825,7 +4104,7 @@ ogrFree: function [a0][
 ]
 
 ogrGeometryTypeToName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGRGeometryTypeToName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGRGeometryTypeToName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 ogrMergeGeometryTypes: function [a0 a1][
@@ -3065,7 +4344,7 @@ ogr_G_GetGeometryType: function [a0][
 ]
 
 ogr_G_GetGeometryName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_GetGeometryName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_GetGeometryName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_G_FlattenTo2D: function [a0][
@@ -3485,7 +4764,7 @@ ogr_Fld_SetName: function [a0 a1][
 ]
 
 ogr_Fld_GetNameRef: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetNameRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetNameRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Fld_SetAlternativeName: function [a0 a1][
@@ -3493,7 +4772,7 @@ ogr_Fld_SetAlternativeName: function [a0 a1][
 ]
 
 ogr_Fld_GetAlternativeNameRef: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetAlternativeNameRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetAlternativeNameRef|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Fld_GetType: function [a0][
@@ -3581,7 +4860,7 @@ ogr_Fld_SetUnique: function [a0 a1][
 ]
 
 ogr_Fld_GetDefault: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetDefault|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetDefault|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Fld_SetDefault: function [a0 a1][
@@ -3593,7 +4872,7 @@ ogr_Fld_IsDefaultDriverSpecific: function [a0][
 ]
 
 ogr_Fld_GetDomainName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetDomainName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetDomainName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Fld_SetDomainName: function [a0 a1][
@@ -3601,7 +4880,7 @@ ogr_Fld_SetDomainName: function [a0 a1][
 ]
 
 ogr_Fld_GetComment: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetComment|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Fld_GetComment|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Fld_SetComment: function [a0 a1][
@@ -3609,7 +4888,7 @@ ogr_Fld_SetComment: function [a0 a1][
 ]
 
 ogr_GetFieldTypeName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_GetFieldTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_GetFieldTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 ogr_GetFieldTypeByName: function [a0][
@@ -3617,7 +4896,7 @@ ogr_GetFieldTypeByName: function [a0][
 ]
 
 ogr_GetFieldSubTypeName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_GetFieldSubTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_GetFieldSubTypeName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 ogr_GetFieldSubTypeByName: function [a0][
@@ -3641,7 +4920,7 @@ ogr_FD_Release: function [a0][
 ]
 
 ogr_FD_GetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_FD_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_FD_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_FD_GetFieldCount: function [a0][
@@ -3825,11 +5104,11 @@ ogr_F_GetFieldAsDouble: function [a0 a1][
 ]
 
 ogr_F_GetFieldAsString: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsString|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsString|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1])))
 ]
 
 ogr_F_GetFieldAsISO8601DateTime: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsISO8601DateTime|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsISO8601DateTime|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2])))
 ]
 
 ogr_F_GetFieldAsIntegerList: function [a0 a1 a2][
@@ -3949,7 +5228,7 @@ ogr_F_SetFromWithMap: function [a0 a1 a2 a3][
 ]
 
 ogr_F_GetStyleString: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetStyleString|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetStyleString|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_F_SetStyleString: function [a0 a1][
@@ -3969,7 +5248,7 @@ ogr_F_SetStyleTable: function [a0 a1][
 ]
 
 ogr_F_GetNativeData: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetNativeData|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetNativeData|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_F_SetNativeData: function [a0 a1][
@@ -3977,7 +5256,7 @@ ogr_F_SetNativeData: function [a0 a1][
 ]
 
 ogr_F_GetNativeMediaType: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetNativeMediaType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetNativeMediaType|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_F_SetNativeMediaType: function [a0 a1][
@@ -3993,7 +5272,7 @@ ogr_F_Validate: function [a0 a1 a2][
 ]
 
 ogr_L_GetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_L_GetGeomType: function [a0][
@@ -4025,7 +5304,7 @@ ogr_L_SetAttributeFilter: function [a0 a1][
 ]
 
 ogr_L_GetAttributeFilter: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetAttributeFilter|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetAttributeFilter|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_L_ResetReading: function [a0][
@@ -4177,11 +5456,11 @@ ogr_L_GetFeaturesRead: function [a0][
 ]
 
 ogr_L_GetFIDColumn: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetFIDColumn|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetFIDColumn|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_L_GetGeometryColumn: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetGeometryColumn|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_L_GetGeometryColumn|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_L_GetStyleTable: function [a0][
@@ -4205,7 +5484,7 @@ ogr_DS_Destroy: function [a0][
 ]
 
 ogr_DS_GetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_DS_GetLayerCount: function [a0][
@@ -4281,7 +5560,7 @@ ogr_DS_SetStyleTable: function [a0 a1][
 ]
 
 ogr_Dr_GetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Dr_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Dr_GetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_Dr_Open: function [a0 a1 a2][
@@ -4361,7 +5640,7 @@ ogr_SM_Destroy: function [a0][
 ]
 
 ogr_SM_InitFromFeature: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_SM_InitFromFeature|str|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_SM_InitFromFeature|str|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1])))
 ]
 
 ogr_SM_InitStyleString: function [a0 a1][
@@ -4405,7 +5684,7 @@ ogr_ST_SetUnit: function [a0 a1 a2][
 ]
 
 ogr_ST_GetParamStr: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_ST_GetParamStr|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_ST_GetParamStr|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2])))
 ]
 
 ogr_ST_GetParamNum: function [a0 a1 a2][
@@ -4429,7 +5708,7 @@ ogr_ST_SetParamDbl: function [a0 a1 a2][
 ]
 
 ogr_ST_GetStyleString: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_ST_GetStyleString|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_ST_GetStyleString|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_ST_GetRGBFromString: function [a0 a1 a2 a3 a4 a5][
@@ -4457,7 +5736,7 @@ ogr_STBL_LoadStyleTable: function [a0 a1][
 ]
 
 ogr_STBL_Find: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_Find|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_Find|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
 ]
 
 ogr_STBL_ResetStyleStringReading: function [a0][
@@ -4465,15 +5744,15 @@ ogr_STBL_ResetStyleStringReading: function [a0][
 ]
 
 ogr_STBL_GetNextStyle: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_GetNextStyle|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_GetNextStyle|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 ogr_STBL_GetLastStyleName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_GetLastStyleName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_STBL_GetLastStyleName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 osrAxisEnumToName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRAxisEnumToName|str|i32" (ffiEncodeArgs ["i32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRAxisEnumToName|str|i32" (ffiEncodeArgs ["i32"] @[a0])))
 ]
 
 osrSetPROJSearchPaths: function [a0][
@@ -4653,11 +5932,11 @@ osrConvertToOtherProjection: function [a0 a1 a2][
 ]
 
 osrGetName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 osrGetCelestialBodyName: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetCelestialBodyName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetCelestialBodyName|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 osrSetAttrValue: function [a0 a1 a2][
@@ -4665,7 +5944,7 @@ osrSetAttrValue: function [a0 a1 a2][
 ]
 
 osrGetAttrValue: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAttrValue|str|ptr,str,i32" (ffiEncodeArgs ["ptr" "str" "i32"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAttrValue|str|ptr,str,i32" (ffiEncodeArgs ["ptr" "str" "i32"] @[a0 a1 a2])))
 ]
 
 osrSetAngularUnits: function [a0 a1 a2][
@@ -4841,11 +6120,11 @@ osrSetAuthority: function [a0 a1 a2 a3][
 ]
 
 osrGetAuthorityCode: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAuthorityCode|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAuthorityCode|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
 ]
 
 osrGetAuthorityName: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAuthorityName|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAuthorityName|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
 ]
 
 osrGetAreaOfUse: function [a0 a1 a2 a3 a4 a5][
@@ -4909,7 +6188,7 @@ osrEPSGTreatsAsNorthingEasting: function [a0][
 ]
 
 osrGetAxis: function [a0 a1 a2 a3][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAxis|str|ptr,str,i32,ptr" (ffiEncodeArgs ["ptr" "str" "i32" "ptr"] @[a0 a1 a2 a3]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAxis|str|ptr,str,i32,ptr" (ffiEncodeArgs ["ptr" "str" "i32" "ptr"] @[a0 a1 a2 a3])))
 ]
 
 osrGetAxesCount: function [a0][
@@ -5217,7 +6496,7 @@ cplGetLastErrorType: function [][
 ]
 
 cplGetLastErrorMsg: function [][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetLastErrorMsg|str|" (ffiEncodeArgs [] @[]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetLastErrorMsg|str|" (ffiEncodeArgs [] @[])))
 ]
 
 cplGetErrorCounter: function [][
@@ -5281,15 +6560,15 @@ cplIsDebugEnabled: function [][
 ]
 
 cplGetConfigOption: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplGetThreadLocalConfigOption: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetThreadLocalConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetThreadLocalConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplGetGlobalConfigOption: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetGlobalConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetGlobalConfigOption|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplSetConfigOption: function [a0 a1][
@@ -5357,15 +6636,15 @@ cplStrdup: function [a0][
 ]
 
 cplReadLineL: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLineL|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLineL|str|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 cplReadLine2L: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLine2L|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLine2L|str|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2])))
 ]
 
 cplReadLine3L: function [a0 a1 a2 a3][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLine3L|str|ptr,i32,ptr,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr" "ptr"] @[a0 a1 a2 a3]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLine3L|str|ptr,i32,ptr,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr" "ptr"] @[a0 a1 a2 a3])))
 ]
 
 cplAtof: function [a0][
@@ -5425,51 +6704,51 @@ cplGetSymbol: function [a0 a1][
 ]
 
 cplGetPath: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetPath|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetPath|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplGetDirname: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetDirname|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetDirname|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplGetBasename: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetBasename|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetBasename|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplGetExtension: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetExtension|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetExtension|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplFormFilename: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFormFilename|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFormFilename|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2])))
 ]
 
 cplFormCIFilename: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFormCIFilename|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFormCIFilename|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2])))
 ]
 
 cplResetExtension: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLResetExtension|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLResetExtension|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplProjectRelativeFilename: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLProjectRelativeFilename|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLProjectRelativeFilename|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplCleanTrailingSlash: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLCleanTrailingSlash|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLCleanTrailingSlash|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplGenerateTempFilename: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGenerateTempFilename|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGenerateTempFilename|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplExpandTilde: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLExpandTilde|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLExpandTilde|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplLaunderForFilename: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLLaunderForFilename|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLLaunderForFilename|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplGetCurrentDir: function [][
@@ -5477,7 +6756,7 @@ cplGetCurrentDir: function [][
 ]
 
 cplGetFilename: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetFilename|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetFilename|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplIsFilenameRelative: function [a0][
@@ -5485,7 +6764,7 @@ cplIsFilenameRelative: function [a0][
 ]
 
 cplExtractRelativePath: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLExtractRelativePath|str|str,str,ptr" (ffiEncodeArgs ["str" "str" "ptr"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLExtractRelativePath|str|str,str,ptr" (ffiEncodeArgs ["str" "str" "ptr"] @[a0 a1 a2])))
 ]
 
 cplCorrespondingPaths: function [a0 a1 a2][
@@ -5493,7 +6772,7 @@ cplCorrespondingPaths: function [a0 a1 a2][
 ]
 
 cplGetHomeDir: function [][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetHomeDir|str|" (ffiEncodeArgs [] @[]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetHomeDir|str|" (ffiEncodeArgs [] @[])))
 ]
 
 cplHasPathTraversal: function [a0][
@@ -5505,11 +6784,11 @@ cplHasUnbalancedPathTraversal: function [a0][
 ]
 
 cplFindFile: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFindFile|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFindFile|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplDefaultFindFile: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLDefaultFindFile|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLDefaultFindFile|str|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
 ]
 
 cplPushFinderLocation: function [a0][
@@ -5541,7 +6820,7 @@ cplDMSToDec: function [a0][
 ]
 
 cplDecToDMS: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLDecToDMS|str|f64,str,i32" (ffiEncodeArgs ["f64" "str" "i32"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLDecToDMS|str|f64,str,i32" (ffiEncodeArgs ["f64" "str" "i32"] @[a0 a1 a2])))
 ]
 
 cplPackedDMSToDec: function [a0][
@@ -5645,7 +6924,7 @@ cslCount: function [a0][
 ]
 
 cslGetField: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLGetField|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLGetField|str|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1])))
 ]
 
 cslDestroy: function [a0][
@@ -5733,15 +7012,15 @@ cplParseMemorySize: function [a0 a1 a2][
 ]
 
 cplParseNameValue: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLParseNameValue|str|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLParseNameValue|str|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1])))
 ]
 
 cslFetchNameValue: function [a0 a1][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLFetchNameValue|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLFetchNameValue|str|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
 ]
 
 cslFetchNameValueDef: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLFetchNameValueDef|str|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLFetchNameValueDef|str|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2])))
 ]
 
 cslFetchNameValueMultiple: function [a0 a1][
@@ -5953,7 +7232,7 @@ vSIHasOptimizedReadMultiRange: function [a0][
 ]
 
 vSIGetActualURL: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetActualURL|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetActualURL|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 vSIGetSignedURL: function [a0 a1][
@@ -5961,7 +7240,7 @@ vSIGetSignedURL: function [a0 a1][
 ]
 
 vSIGetFileSystemOptions: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetFileSystemOptions|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetFileSystemOptions|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 vSIGetFileSystemsPrefixes: function [][
@@ -5989,7 +7268,7 @@ vSIClearPathSpecificOptions: function [a0][
 ]
 
 vSIGetPathSpecificOption: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetPathSpecificOption|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetPathSpecificOption|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2])))
 ]
 
 vSISetCredential: function [a0 a1 a2][
@@ -6001,7 +7280,7 @@ vSIClearCredentials: function [a0][
 ]
 
 vSIGetCredential: function [a0 a1 a2][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetCredential|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetCredential|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2])))
 ]
 
 vSICalloc: function [a0 a1][
@@ -6097,7 +7376,7 @@ vSISiblingFiles: function [a0][
 ]
 
 vSIGetDirectorySeparator: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetDirectorySeparator|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetDirectorySeparator|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 vSIOpenDir: function [a0 a1 a2][
@@ -6321,7 +7600,7 @@ vSIGetMemFileBuffer: function [a0 a1 a2][
 ]
 
 vSIMemGenerateHiddenFilename: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMemGenerateHiddenFilename|str|str" (ffiEncodeArgs ["str"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMemGenerateHiddenFilename|str|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 vSIAllocFilesystemPluginCallbacksStruct: function [][
@@ -6345,7 +7624,7 @@ vSITime: function [a0][
 ]
 
 vSICTime: function [a0][
-    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICTime|str|u32" (ffiEncodeArgs ["u32"] @[a0]))
+    return (gdalNullStr (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICTime|str|u32" (ffiEncodeArgs ["u32"] @[a0])))
 ]
 
 gdalInfoOptionsNew: function [a0 a1][
@@ -6542,8 +7821,8 @@ gdalTileIndex: function [a0 a1 a2 a3 a4][
 
 gdalOwnership: #[
     "GDALCreate": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "GDALClose"
     ]
     "GDALIdentifyDriver": #[
         ownership: "unknown"
@@ -6578,7 +7857,7 @@ gdalOwnership: #[
         release: null
     ]
     "GDALGetDatasetDriver": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALGetRasterBand": #[
@@ -6602,7 +7881,7 @@ gdalOwnership: #[
         release: null
     ]
     "GDALDatasetGetLayer": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "OGR_L_GetDataset": #[
@@ -6610,11 +7889,11 @@ gdalOwnership: #[
         release: null
     ]
     "GDALDatasetGetLayerByName": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALDatasetCreateLayer": #[
-        ownership: "unknown"
+        ownership: "borrowed"
         release: null
     ]
     "GDALDatasetCopyLayer": #[
@@ -6742,8 +8021,8 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_G_CreateGeometry": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "OGR_G_DestroyGeometry"
     ]
     "OGR_G_ApproximateArcAngles": #[
         ownership: "unknown"
@@ -6930,8 +8209,8 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_F_Create": #[
-        ownership: "unknown"
-        release: null
+        ownership: "owned"
+        release: "OGR_F_Destroy"
     ]
     "OGR_F_GetDefnRef": #[
         ownership: "borrowed"
@@ -7187,9 +8466,10 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 ; the GDAL release, e.g. "3.13.2"
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
 
-; whether a declared function's symbol exists in the installed library
-; (SPEC 29): guard calls to version-varying functions with this
+; true only for a generated BOUND symbol that the installed library
+; actually exports (SPEC 29). Unknown or misspelled names are false.
 gdalHasSymbol: function [ghsName][
+    if not? (contains? gdalBoundSymbols ghsName) [ return false ]
     return not? (contains? gdalMissingSymbols ghsName)
 ]
 
@@ -7335,7 +8615,9 @@ setFieldInteger: function [sfiF sfiI sfiV][ return (ogr_F_SetFieldInteger sfiF s
 setFieldDouble: function [sfdF sfdI sfdV][ return (ogr_F_SetFieldDouble sfdF sfdI sfdV) ]
 featureSetGeometry: function [fsgF fsgG][ return (ogr_F_SetGeometry fsgF fsgG) ]
 
-; commit a feature to a layer (transfers ownership of the feature handle)
+; write a feature to a layer. OGR_L_CreateFeature copies; the caller
+; still owns the feature and any standalone geometry (OGR_F_SetGeometry
+; clones). Destroy both after a successful write.
 createFeature: function [cfLayer cfF][ return (ogr_L_CreateFeature cfLayer cfF) ]
 
 ; geometry construction (returned handles are owned; destroyFeature the
@@ -7465,7 +8747,7 @@ driverLongName: function [dlnDs] [
 
 description: function [deDs][ return (gdalGetDescription deDs) ]
 
-; a single metadata item from the default domain (or "" if absent)
+; a single metadata item from the default domain (or null if absent)
 metadataItem: function [miDs miKey][ return (gdalGetMetadataItem miDs miKey "") ]
 
 ; bytes per pixel for a GDALDataType
@@ -7667,16 +8949,7 @@ geometryType: function [gtG][ return (ogr_G_GetGeometryType gtG) ]
 spatialReference: function [srDef] [
     srS: osrNewSpatialReference ""
     if null? srS [ return null ]
-    srRc: 1
-    if (size srDef) > 5 [
-        if (slice srDef 0 3) = "EPSG" [
-            srCodeStr: slice srDef 5 (size srDef) - 1
-            srRc: osrImportFromEPSG srS (to :integer srCodeStr)
-        ]
-    ]
-    if not? (srRc = 0) [
-        srRc: osrImportFromWkt srS srDef
-    ]
+    srRc: osrSetFromUserInput srS srDef
     if not? (srRc = 0) [
         srD: osrDestroySpatialReference srS
         return null

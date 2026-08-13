@@ -37,9 +37,10 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 ; the GDAL release, e.g. "3.13.2"
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
 
-; whether a declared function's symbol exists in the installed library
-; (SPEC 29): guard calls to version-varying functions with this
+; true only for a generated BOUND symbol that the installed library
+; actually exports (SPEC 29). Unknown or misspelled names are false.
 gdalHasSymbol: function [ghsName][
+    if not? (contains? gdalBoundSymbols ghsName) [ return false ]
     return not? (contains? gdalMissingSymbols ghsName)
 ]
 
@@ -185,7 +186,9 @@ setFieldInteger: function [sfiF sfiI sfiV][ return (ogr_F_SetFieldInteger sfiF s
 setFieldDouble: function [sfdF sfdI sfdV][ return (ogr_F_SetFieldDouble sfdF sfdI sfdV) ]
 featureSetGeometry: function [fsgF fsgG][ return (ogr_F_SetGeometry fsgF fsgG) ]
 
-; commit a feature to a layer (transfers ownership of the feature handle)
+; write a feature to a layer. OGR_L_CreateFeature copies; the caller
+; still owns the feature and any standalone geometry (OGR_F_SetGeometry
+; clones). Destroy both after a successful write.
 createFeature: function [cfLayer cfF][ return (ogr_L_CreateFeature cfLayer cfF) ]
 
 ; geometry construction (returned handles are owned; destroyFeature the
@@ -315,7 +318,7 @@ driverLongName: function [dlnDs] [
 
 description: function [deDs][ return (gdalGetDescription deDs) ]
 
-; a single metadata item from the default domain (or "" if absent)
+; a single metadata item from the default domain (or null if absent)
 metadataItem: function [miDs miKey][ return (gdalGetMetadataItem miDs miKey "") ]
 
 ; bytes per pixel for a GDALDataType
@@ -517,16 +520,7 @@ geometryType: function [gtG][ return (ogr_G_GetGeometryType gtG) ]
 spatialReference: function [srDef] [
     srS: osrNewSpatialReference ""
     if null? srS [ return null ]
-    srRc: 1
-    if (size srDef) > 5 [
-        if (slice srDef 0 3) = "EPSG" [
-            srCodeStr: slice srDef 5 (size srDef) - 1
-            srRc: osrImportFromEPSG srS (to :integer srCodeStr)
-        ]
-    ]
-    if not? (srRc = 0) [
-        srRc: osrImportFromWkt srS srDef
-    ]
+    srRc: osrSetFromUserInput srS srDef
     if not? (srRc = 0) [
         srD: osrDestroySpatialReference srS
         return null

@@ -42,6 +42,15 @@ do [
     checkClose "transform easting" (xy\0) 707282.029380758 0.001
     checkClose "transform northing" (xy\1) 3443248.09534568 0.001
 
+    ; WKT input (osrSetFromUserInput), same point
+    wkt: {GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]}
+    srcW: spatialReference wkt
+    if null? srcW [ panic "could not create SRS from WKT" ]
+    xyW: transformPoint srcW dst [77.1734 31.1048]
+    checkClose "wkt transform easting" (xyW\0) 707282.029380758 0.001
+    checkClose "wkt transform northing" (xyW\1) 3443248.09534568 0.001
+    destroySpatialReference srcW
+
     destroySpatialReference src
     destroySpatialReference dst
     print "-------------------------------------"

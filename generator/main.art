@@ -339,6 +339,14 @@ gsRunPipeline: function [grpMode grpRoot] [
     ]
 ]
 
+; pin "3.8" matches "3.8" and "3.8.x" (SPEC 31)
+gsMatchesPin: function [gmpVer gmpPin] [
+    if gmpVer = gmpPin [ return true ]
+    gmpPref: gmpPin ++ "."
+    if (size gmpVer) < (size gmpPref) [ return false ]
+    return (slice gmpVer 0 ((size gmpPref) - 1)) = gmpPref
+]
+
 ;---- entry --------------------------------------------------------------
 do [
     gsArgs: arg
@@ -433,8 +441,9 @@ do [
         ]
         print "abi probe: OK"
 
-        ; golden compare only when installed GDAL matches the pin
-        if gsVersion = gsPin [
+        ; golden compare when installed GDAL matches the pin as a
+        ; prefix (SPEC 31: pin 3.8 means 3.8 or 3.8.x)
+        if gsMatchesPin gsVersion gsPin [
             gsGoldTmp: ".gen_tmp_golden"
             write.directory null gsGoldTmp
             gsHeaderTokens: #[]
@@ -458,7 +467,7 @@ do [
             if not? gsGoldOk [ panic "gdal.art: generated sources drifted from checked-in files" ]
             print ["golden compare: OK (GDAL" gsPin ")"]
         ]
-        if not? (gsVersion = gsPin) [
+        if not? (gsMatchesPin gsVersion gsPin) [
             print ["golden compare: skipped (installed GDAL" gsVersion "!= pin" gsPin ")"]
         ]
     ]
