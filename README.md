@@ -28,33 +28,28 @@ installed GDAL headers
 
 ## Status
 
-Stages A–G (see `SPEC.md` §41–§47) are proven end to end. Both halves of GDAL
-are exercised in both directions:
+The generated bindings cover raster, vector, spatial-reference, and GDAL
+utility workflows. The test suite reads and writes GeoTIFF and GeoJSON data,
+transforms coordinates and geometries, runs GEOS predicates, and exercises
+translation, warping, rasterization, and dataset inspection.
 
-- a GeoTIFF is **read** through `GDALRasterIO` and **created** through `GDALCreate`;
-- a GeoJSON layer is walked with WKT export and **written** by creating a
-  dataset, layer, fields, features, and point/line geometries;
-- an EPSG:4326 coordinate is transformed to a projected CRS through a
-  coordinate transformer, with GEOS predicates and geometry transforms;
-- the `gdal_utils.h` family runs through the bindings — format conversion,
-  reprojection/warping, vector conversion, rasterization, and dataset
-  inspection (`GDALTranslate`, `GDALWarp`, `GDALVectorTranslate`,
-  `GDALRasterize`, `GDALInfo`) with option arrays built as CSL argv lists.
+Generation against GDAL 3.13.2 on macOS arm64 currently finds 1,609 public C
+functions. It binds 1,259 and defers 350 that cannot yet be represented safely.
+Every deferred declaration is recorded with a reason; none are silently
+dropped.
 
-On the installed GDAL (currently **3.13.2** on macOS arm64), generation
-discovers **1609** public C functions: **1259** bound and **350** deferred
-with an explicit reason. Unsupported declarations are reported, never
-silently dropped.
+| Core surface | Bound | Coverage |
+| --- | ---: | ---: |
+| Raster | 13 / 13 | 100% |
+| Vector | 17 / 17 | 100% |
+| Spatial reference | 10 / 10 | 100% |
 
-| surface | coverage |
-|---|---|
-| raster core | 13 / 13 (100%) |
-| vector core | 17 / 17 (100%) |
-| SRS core    | 10 / 10 (100%) |
+The parser includes `cpl_port.h` and `gdal_utils.h`. At the raw layer, owned
+`char*` results are exposed as `ptr` and must be released with `VSIFree`. This
+includes results from functions such as `GDALInfo` and
+`OGR_G_ExportToJson`.
 
-`cpl_port.h` and `gdal_utils.h` are part of the parsed surface; owned `char*`
-returns are bound at the raw layer as `ptr` (the caller frees them via
-`VSIFree`), so `GDALInfo`, `OGR_G_ExportToJson`, and friends are available.
+See [`SPEC.md`](SPEC.md) for the staged implementation plan and ABI rules.
 
 ## Requirements
 
@@ -64,24 +59,34 @@ returns are bound at the raw layer as `ptr` (the caller frees them via
 
 ## Build
 
-| target | what it does |
-|---|---|
-| `make native`   | build the `arturo-ffi` native adapter |
+| Target | What it does |
+| --- | --- |
+| `make native` | build the `arturo-ffi` native adapter |
 | `make generate` | discover installed GDAL and regenerate bindings |
-| `make check`    | determinism (regenerate twice) + golden drift compare |
-| `make test`     | run the nine test suites |
+| `make check` | determinism (regenerate twice) + golden drift compare |
+| `make test` | run the nine test suites |
 | `make examples` | run the ten worked examples under `examples/` |
 | `make coverage` | print coverage and deferred reasons |
 
-GDAL discovery order (SPEC §6.1): `GDAL_CONFIG`, `gdal-config`, `pkg-config`,
-standard paths, then `GDAL_INCLUDE_PATH` / `GDAL_LIBRARY_PATH`.
+For a full local verification run:
 
-CI (SPEC §50): GitHub Actions runs `make native generate check test examples
-coverage` plus the `arturo-ffi` adapter suite on macOS arm64 (Homebrew GDAL)
-and Linux x86_64 (OSGeo GDAL 3.8.5 and 3.10.1 containers). All jobs use the
-released Arturo v0.10.0 binaries with published SHA-256 checksums verified
-before extraction; GDAL 3.8 uses Arturo's legacy Linux build for its older
-glibc/WebKit runtime.
+```sh
+make native generate check test examples coverage
+make -C arturo-ffi test
+```
+
+The generator looks for GDAL in this order:
+
+1. `GDAL_CONFIG`
+2. `gdal-config`
+3. `pkg-config`
+4. standard include and library paths
+5. `GDAL_INCLUDE_PATH` and `GDAL_LIBRARY_PATH`
+
+GitHub Actions runs the full verification command and the `arturo-ffi` adapter
+suite on macOS arm64 and Linux x86_64. The Linux matrix covers GDAL 3.8.5 and
+3.10.1. CI uses checksum-verified Arturo v0.10.0 release binaries; the GDAL 3.8
+job uses Arturo's legacy Linux build for compatibility with its older runtime.
 
 ## Use
 
@@ -113,17 +118,24 @@ The raw generated bindings stay available and recognizable (`gdalOpenEx`,
 
 ## Tests
 
-`make test` runs nine suites: the Stage A generation round-trip, the `SPEC`
-§21 raster success test, the §23 vector success test, the §44 CRS transform
-test, a suite that locks in the idiomatic `sugar.art` layer, a §45 raster
-write/read round-trip, a §46 vector write/read round-trip with GEOS, a
-§47 utilities suite, and adversarial coverage for error paths, every supported
-scalar raster type, and streaming feature iteration
-(`tests/generation.art` through `tests/adversarial.art`).
+`make test` runs nine suites:
 
-`make check` regenerates twice into temp dirs and fails on drift; the golden
-compare runs only when the installed GDAL matches `GDAL_CHECK_VERSION`
-(default 3.8).
+| Suite | Covers |
+| --- | --- |
+| `generation.art` | generation round-trip and missing-dataset behavior |
+| `raster.art` | raster metadata, pixels, projection, and geotransform |
+| `vector.art` | layers, features, fields, and WKT export |
+| `srs.art` | coordinate and WKT transformations |
+| `sugar.art` | the convenience API and symbol checks |
+| `write.art` | raster creation and read-back |
+| `vector_write.art` | vector creation, read-back, GEOS, and transforms |
+| `utilities.art` | translate, warp, vector translate, rasterize, and info |
+| `adversarial.art` | errors, scalar raster types, and streamed iteration |
+
+`make check` covers generated output rather than runtime behavior. It
+regenerates the bindings twice to catch nondeterminism, verifies the ABI, and
+checks for golden-file drift when the installed GDAL version matches
+`GDAL_CHECK_VERSION` (3.8 by default).
 
 ## Layout
 
