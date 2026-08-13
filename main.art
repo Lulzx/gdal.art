@@ -6673,3 +6673,50 @@ featureWkt: function [fwF][
 
 geometryName: function [gnG][ return (ogr_G_GetGeometryName gnG) ]
 geometryType: function [gtG][ return (ogr_G_GetGeometryType gtG) ]
+
+;-----------------------------------------------------------
+; spatial reference / coordinate transformation sugar
+;-----------------------------------------------------------
+
+; build a spatial reference from "EPSG:4326" or a WKT string.
+; Axis mapping is set to traditional GIS order (lon,lat) so callers
+; can use longitude/latitude explicitly (SPEC 24).
+spatialReference: function [srDef] [
+    srS: osrNewSpatialReference ""
+    if null? srS [ return null ]
+    srRc: 1
+    if (size srDef) > 5 [
+        if (slice srDef 0 3) = "EPSG" [
+            srCodeStr: slice srDef 5 (size srDef) - 1
+            srRc: osrImportFromEPSG srS (to :integer srCodeStr)
+        ]
+    ]
+    if not? (srRc = 0) [
+        srRc: osrImportFromWkt srS srDef
+    ]
+    if not? (srRc = 0) [
+        srD: osrDestroySpatialReference srS
+        return null
+    ]
+    srA: osrSetAxisMappingStrategy srS OAMS_TRADITIONAL_GIS_ORDER
+    return srS
+]
+
+destroySpatialReference: function [dsrS][ return (osrDestroySpatialReference dsrS) ]
+
+; transform one [x y] point from src to dst CRS; returns [x y]
+transformPoint: function [tpSrc tpDst tpXY] [
+    tpCt: octNewCoordinateTransformation tpSrc tpDst
+    if null? tpCt [ return null ]
+    tpBuf: ffiAlloc 24
+    tpS1: ffiStoreF64 tpBuf 0 (tpXY\0)
+    tpS2: ffiStoreF64 tpBuf 8 (tpXY\1)
+    tpS3: ffiStoreF64 tpBuf 16 0.0
+    tpOk: octTransform tpCt 1 tpBuf (tpBuf + 8) (tpBuf + 16)
+    tpX: ffiLoadF64 tpBuf 0
+    tpY: ffiLoadF64 tpBuf 8
+    tpD: octDestroyCoordinateTransformation tpCt
+    tpF: ffiFree tpBuf
+    if tpOk = 0 [ return null ]
+    return @[tpX tpY]
+]

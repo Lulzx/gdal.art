@@ -28,10 +28,11 @@ installed GDAL headers
 
 ## Status
 
-Stages A–C (see `SPEC.md` §41–§43): generation is proven end to end, and
+Stages A–D (see `SPEC.md` §41–§44): generation is proven end to end, and
 both halves of GDAL are exercised — a GeoTIFF is opened and read through
-`GDALRasterIO`, and a GeoJSON layer is walked with WKT export through the
-`char**` out-slot.
+`GDALRasterIO`, a GeoJSON layer is walked with WKT export through the
+`char**` out-slot, and an EPSG:4326 coordinate is transformed to a
+projected CRS through a coordinate transformer.
 
 For the installed GDAL (currently **3.13.2** on macOS arm64), generation
 discovers **1549** public C functions, of which **1119** are bound and
@@ -44,8 +45,9 @@ vector core   16 / 17   (94%)
 SRS core      10 / 10   (100%)
 ```
 
-`make test` runs three suites: the Stage A generation round-trip, the
-`SPEC` §21 raster success test, and the §23 vector success test.
+`make test` runs four suites: the Stage A generation round-trip, the
+`SPEC` §21 raster success test, the §23 vector success test, and the §44
+CRS transform test.
 
 ## Requirements
 

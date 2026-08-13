@@ -1,0 +1,55 @@
+;===========================================================
+; srs.art - Stage D (SPEC 24, 44)
+;
+; EPSG:4326 coordinate -> coordinate transformer -> projected CRS
+; with a known expected coordinate within tolerance.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+
+check: function [label got expected] [
+    if got = expected [
+        print ["PASS" label]
+    ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+checkClose: function [label got expected tol] [
+    d: got - expected
+    if d < 0 [ d: 0 - d ]
+    if d < tol [
+        print ["PASS" label]
+    ]
+    if not? (d < tol) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    src: spatialReference "EPSG:4326"
+    dst: spatialReference "EPSG:32643"
+    if null? src [ panic "could not create EPSG:4326" ]
+    if null? dst [ panic "could not create EPSG:32643" ]
+
+    ; (lon, lat) in GIS order -> UTM 43N (easting, northing)
+    xy: transformPoint src dst [77.1734 31.1048]
+    checkClose "transform easting" (xy\0) 707282.029380758 0.001
+    checkClose "transform northing" (xy\1) 3443248.09534568 0.001
+
+    destroySpatialReference src
+    destroySpatialReference dst
+    print "-------------------------------------"
+    if t\failures = 0 [
+        print "srs: all tests passed"
+    ]
+    if not? (t\failures = 0) [
+        print ["srs:" t\failures "failures"]
+        panic "srs: FAILED"
+    ]
+]
