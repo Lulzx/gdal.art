@@ -381,3 +381,35 @@ gdalDeferred: #[
     "GDALTileIndexOptionsSetProgress": "unsupported type"
 ]
 
+; functions declared in the headers but not exported by the
+; installed library (SPEC 29) - guard calls with gdalHasSymbol
+gdalMissingSymbols: [
+    "GDALExtractRPCInfoV1"
+    "OGRStrdup"
+    "CPLsetlocale"
+    "CPLCleanupSetlocaleMutex"
+    "VSIInstallCurlFileHandler"
+    "VSIInstallCurlStreamingFileHandler"
+    "VSIInstallS3FileHandler"
+    "VSIInstallS3StreamingFileHandler"
+    "VSIInstallGSFileHandler"
+    "VSIInstallGSStreamingFileHandler"
+    "VSIInstallAzureFileHandler"
+    "VSIInstallAzureStreamingFileHandler"
+    "VSIInstallADLSFileHandler"
+    "VSIInstallOSSFileHandler"
+    "VSIInstallOSSStreamingFileHandler"
+    "VSIInstallSwiftFileHandler"
+    "VSIInstallSwiftStreamingFileHandler"
+    "VSIInstall7zFileHandler"
+    "VSIInstallRarFileHandler"
+    "VSIInstallGZipFileHandler"
+    "VSIInstallZipFileHandler"
+    "VSIInstallStdinHandler"
+    "VSIInstallHdfsHandler"
+    "VSIInstallWebHdfsHandler"
+    "VSIInstallStdoutHandler"
+    "VSIInstallTarFileHandler"
+    "VSIInstallCachedFileHandler"
+]
+

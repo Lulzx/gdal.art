@@ -133,7 +133,7 @@ gsGenConstants: function [] [
 ]
 
 ; generate handle/type metadata
-gsGenTypes: function [ggtFns] [
+gsGenTypes: function [ggtFns ggtMissing] [
     ggtS: ""
     ggtS: ggtS ++ "; DO NOT EDIT\n"
     ggtS: ggtS ++ "; Generated handle/type metadata. Handles are Arturo-level\n"
@@ -154,12 +154,16 @@ gsGenTypes: function [ggtFns] [
         ]
     ]
     ggtS: ggtS ++ "]\n\n"
+    ggtS: ggtS ++ "; functions declared in the headers but not exported by the\n"
+    ggtS: ggtS ++ "; installed library (SPEC 29) - guard calls with gdalHasSymbol\n"
+    ggtS: ggtS ++ "gdalMissingSymbols: [\n"
+    loop ggtMissing 'ggtM [ ggtS: ggtS ++ "    \"" ++ (to :string ggtM) ++ "\"\n" ]
+    ggtS: ggtS ++ "]\n\n"
     return ggtS
 ]
 
 ; generate the ownership source
-gsGenOwnership: function [ggoFns] [
-    ggoS: ""
+gsGenOwnership: function [ggoFns] [    ggoS: ""
     ggoS: ggoS ++ "; DO NOT EDIT\n"
     ggoS: ggoS ++ "; Ownership of pointer-returning functions (SPEC 11).\n"
     ggoS: ggoS ++ "; `unknown` is emitted deliberately when unverified.\n\n"

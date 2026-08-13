@@ -302,7 +302,7 @@ gsRunPipeline: function [grpMode grpRoot] [
     write grpBind (grpGenDir ++ "/gdal.generated.art")
     grpConst: gsGenConstants
     write grpConst (grpGenDir ++ "/constants.generated.art")
-    grpTypes: gsGenTypes grpFns
+    grpTypes: gsGenTypes grpFns grpMissing
     write grpTypes (grpGenDir ++ "/types.generated.art")
     grpOwn: gsGenOwnership grpFns
     write grpOwn (grpGenDir ++ "/ownership.generated.art")

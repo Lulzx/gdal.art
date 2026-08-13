@@ -999,6 +999,38 @@ gdalDeferred: #[
     "GDALTileIndexOptionsSetProgress": "unsupported type"
 ]
 
+; functions declared in the headers but not exported by the
+; installed library (SPEC 29) - guard calls with gdalHasSymbol
+gdalMissingSymbols: [
+    "GDALExtractRPCInfoV1"
+    "OGRStrdup"
+    "CPLsetlocale"
+    "CPLCleanupSetlocaleMutex"
+    "VSIInstallCurlFileHandler"
+    "VSIInstallCurlStreamingFileHandler"
+    "VSIInstallS3FileHandler"
+    "VSIInstallS3StreamingFileHandler"
+    "VSIInstallGSFileHandler"
+    "VSIInstallGSStreamingFileHandler"
+    "VSIInstallAzureFileHandler"
+    "VSIInstallAzureStreamingFileHandler"
+    "VSIInstallADLSFileHandler"
+    "VSIInstallOSSFileHandler"
+    "VSIInstallOSSStreamingFileHandler"
+    "VSIInstallSwiftFileHandler"
+    "VSIInstallSwiftStreamingFileHandler"
+    "VSIInstall7zFileHandler"
+    "VSIInstallRarFileHandler"
+    "VSIInstallGZipFileHandler"
+    "VSIInstallZipFileHandler"
+    "VSIInstallStdinHandler"
+    "VSIInstallHdfsHandler"
+    "VSIInstallWebHdfsHandler"
+    "VSIInstallStdoutHandler"
+    "VSIInstallTarFileHandler"
+    "VSIInstallCachedFileHandler"
+]
+
 ; DO NOT EDIT
 ; Generated constants (enums + #define) from the installed GDAL headers.
 
@@ -7143,6 +7175,19 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 
 ; the GDAL release, e.g. "3.13.2"
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
+
+; whether a declared function's symbol exists in the installed library
+; (SPEC 29): guard calls to version-varying functions with this
+gdalHasSymbol: function [ghsName][
+    return not? (contains? gdalMissingSymbols ghsName)
+]
+
+; GDAL >= maj.min.patch, e.g. gdalAtLeast 3 8 0 (SPEC 30)
+gdalAtLeast: function [gaMaj gaMin gaPatch] [
+    gaNum: to :integer (gdalVersionInfo "VERSION_NUM")
+    gaNeed: (gaMaj * 1000000) + (gaMin * 10000) + (gaPatch * 100)
+    return not? (gaNum < gaNeed)
+]
 
 ;------------------------------------------------------------------
 ; utilities / gdal_utils.h (Stage G)

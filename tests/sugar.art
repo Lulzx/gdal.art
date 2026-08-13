@@ -64,6 +64,12 @@ do [
     destroyFeature f
     closeDataset pts
 
+    ; version guards (SPEC 29-30)
+    check "at least 3.8.0" (gdalAtLeast 3 8 0) true
+    check "not at least 4.0.0" (gdalAtLeast 4 0 0) false
+    check "has GDALOpenEx" (gdalHasSymbol "GDALOpenEx") true
+    check "missing symbol flagged" (gdalHasSymbol "CPLCleanupSetlocaleMutex") false
+
     print "-------------------------------------"
     if t\failures = 0 [ print "sugar: all tests passed" ]
     if not? (t\failures = 0) [
