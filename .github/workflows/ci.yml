@@ -61,7 +61,7 @@ jobs:
             apt-get install -y -qq libwebkit2gtk-4.1-dev \
               || apt-get install -y -qq libwebkit2gtk-4.0-dev
             curl -fsSL -o arturo.zip \
-              "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-linux-amd64.zip"
+              "https://github.com/arturo-lang/arturo/releases/download/v0.10.0/arturo-0.10.0-linux-amd64-legacy.zip"
             unzip -q arturo.zip -d arturo-bin
             chmod +x arturo-bin/arturo
             export PATH="$PWD/arturo-bin:$PATH"
