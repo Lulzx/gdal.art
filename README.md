@@ -76,10 +76,12 @@ returns are bound at the raw layer as `ptr` (the caller frees them via
 GDAL discovery order (SPEC §6.1): `GDAL_CONFIG`, `gdal-config`, `pkg-config`,
 standard paths, then `GDAL_INCLUDE_PATH` / `GDAL_LIBRARY_PATH`.
 
-CI (SPEC §50): a GitHub Actions workflow runs the full matrix — `make native
-generate check test coverage` — on macOS arm64 (Homebrew GDAL) and Linux
-x86_64 (GDAL 3.10.1 in the OSGeo GHCR container), pinned to the released
-Arturo v0.10.0 binary on both.
+CI (SPEC §50): GitHub Actions runs `make native generate check test examples
+coverage` plus the `arturo-ffi` adapter suite on macOS arm64 (Homebrew GDAL)
+and Linux x86_64 (OSGeo GDAL 3.8.5 and 3.10.1 containers). All jobs use the
+released Arturo v0.10.0 binaries with published SHA-256 checksums verified
+before extraction; GDAL 3.8 uses Arturo's legacy Linux build for its older
+glibc/WebKit runtime.
 
 ## Use
 
