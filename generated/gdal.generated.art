@@ -183,6 +183,10 @@ gdalCopyDatasetFiles: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALCopyDatasetFiles|i32|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2]))
 ]
 
+gdalGetOutputDriversForDatasetName: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetOutputDriversForDatasetName|ptr|str,i32,bool,bool" (ffiEncodeArgs ["str" "i32" "bool" "bool"] @[a0 a1 a2 a3])))
+]
+
 gdalDriverHasOpenOption: function [a0 a1][
     return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDriverHasOpenOption|bool|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
 ]
@@ -247,6 +251,10 @@ gdalComposeHomographies: function [a0 a1 a2][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALComposeHomographies|void|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2]))
 ]
 
+gdalGetMetadataDomainList: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetMetadataDomainList|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
 gdalGetMetadataItem: function [a0 a1 a2][
     return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetMetadataItem|str|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2]))
 ]
@@ -265,6 +273,10 @@ gdalSetDescription: function [a0 a1][
 
 gdalGetDatasetDriver: function [a0][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetDatasetDriver|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+gdalGetFileList: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetFileList|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalDatasetMarkSuppressOnClose: function [a0][
@@ -309,6 +321,14 @@ gdalDatasetRasterIO: function [a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14
 
 gdalDatasetRasterIOEx: function [a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetRasterIOEx|i32|ptr,i32,i32,i32,i32,i32,ptr,i32,i32,i32,i32,ptr,i64,i64,i64,ptr" (ffiEncodeArgs ["ptr" "i32" "i32" "i32" "i32" "i32" "ptr" "i32" "i32" "i32" "i32" "ptr" "i64" "i64" "i64" "ptr"] @[a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15]))
+]
+
+gdalDatasetGetCompressionFormats: function [a0 a1 a2 a3 a4 a5 a6][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetGetCompressionFormats|ptr|ptr,i32,i32,i32,i32,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "i32" "i32" "i32" "i32" "ptr"] @[a0 a1 a2 a3 a4 a5 a6])))
+]
+
+gdalDatasetReadCompressedData: function [a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetReadCompressedData|i32|ptr,str,i32,i32,i32,i32,i32,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "str" "i32" "i32" "i32" "i32" "i32" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10]))
 ]
 
 gdalGetProjectionRef: function [a0][
@@ -475,8 +495,24 @@ gdalDatasetClearStatistics: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetClearStatistics|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
 ]
 
+gdalDatasetDeleteFieldDomain: function [a0 a1 a2][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetDeleteFieldDomain|bool|ptr,str,ptr" (ffiEncodeArgs ["ptr" "str" "ptr"] @[a0 a1 a2])))
+]
+
 gdalDatasetGetRelationship: function [a0 a1][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetGetRelationship|ptr|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
+]
+
+gdalDatasetAddRelationship: function [a0 a1 a2][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetAddRelationship|bool|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2])))
+]
+
+gdalDatasetDeleteRelationship: function [a0 a1 a2][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetDeleteRelationship|bool|ptr,str,ptr" (ffiEncodeArgs ["ptr" "str" "ptr"] @[a0 a1 a2])))
+]
+
+gdalDatasetUpdateRelationship: function [a0 a1 a2][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDatasetUpdateRelationship|bool|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2])))
 ]
 
 gdalGetRasterDataType: function [a0][
@@ -581,6 +617,10 @@ gdalSetRasterNoDataValueAsUInt64: function [a0 a1][
 
 gdalDeleteRasterNoDataValue: function [a0][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDeleteRasterNoDataValue|i32|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+gdalGetRasterCategoryNames: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALGetRasterCategoryNames|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalGetRasterMinimum: function [a0 a1][
@@ -799,6 +839,22 @@ gdalWriteWorldFile: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALWriteWorldFile|i32|str,str,ptr" (ffiEncodeArgs ["str" "str" "ptr"] @[a0 a1 a2]))
 ]
 
+gdalLoadTabFile: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALLoadTabFile|i32|str,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
+]
+
+gdalReadTabFile: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALReadTabFile|i32|str,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
+]
+
+gdalLoadOziMapFile: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALLoadOziMapFile|i32|str,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
+]
+
+gdalReadOziMapFile: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALReadOziMapFile|i32|str,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
+]
+
 gdalDecToDMS: function [a0 a1 a2][
     return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALDecToDMS|str|f64,str,i32" (ffiEncodeArgs ["f64" "str" "i32"] @[a0 a1 a2]))
 ]
@@ -955,6 +1011,10 @@ gdalRATValuesIOAsInteger: function [a0 a1 a2 a3 a4 a5][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATValuesIOAsInteger|i32|ptr,i32,i32,i32,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "i32" "i32" "i32" "ptr"] @[a0 a1 a2 a3 a4 a5]))
 ]
 
+gdalRATValuesIOAsString: function [a0 a1 a2 a3 a4 a5][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATValuesIOAsString|i32|ptr,i32,i32,i32,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "i32" "i32" "i32" "ptr"] @[a0 a1 a2 a3 a4 a5]))
+]
+
 gdalRATValuesIOAsBoolean: function [a0 a1 a2 a3 a4 a5][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRATValuesIOAsBoolean|i32|ptr,i32,i32,i32,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "i32" "i32" "i32" "ptr"] @[a0 a1 a2 a3 a4 a5]))
 ]
@@ -1045,6 +1105,22 @@ gdalRelationshipGetMappingTableName: function [a0][
 
 gdalRelationshipSetMappingTableName: function [a0 a1][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipSetMappingTableName|void|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+]
+
+gdalRelationshipGetLeftTableFields: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetLeftTableFields|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+gdalRelationshipGetRightTableFields: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRightTableFields|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+gdalRelationshipGetLeftMappingTableFields: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetLeftMappingTableFields|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+gdalRelationshipGetRightMappingTableFields: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::GDALRelationshipGetRightMappingTableFields|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
 gdalRelationshipGetType: function [a0][
@@ -1243,6 +1319,10 @@ ogr_G_CreateFromWkbEx: function [a0 a1 a2 a3][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_CreateFromWkbEx|i32|ptr,ptr,ptr,u64" (ffiEncodeArgs ["ptr" "ptr" "ptr" "u64"] @[a0 a1 a2 a3]))
 ]
 
+ogr_G_CreateFromWkt: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_CreateFromWkt|i32|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2]))
+]
+
 ogr_G_CreateFromFgf: function [a0 a1 a2 a3 a4][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_CreateFromFgf|i32|ptr,ptr,ptr,i32,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr" "i32" "ptr"] @[a0 a1 a2 a3 a4]))
 ]
@@ -1369,6 +1449,18 @@ ogr_G_WkbSize: function [a0][
 
 ogr_G_WkbSizeEx: function [a0][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_WkbSizeEx|u64|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+ogr_G_ImportFromWkt: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_ImportFromWkt|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+]
+
+ogr_G_ExportToWkt: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_ExportToWkt|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+]
+
+ogr_G_ExportToIsoWkt: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_G_ExportToIsoWkt|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
 ]
 
 ogr_G_GetGeometryType: function [a0][
@@ -2111,6 +2203,10 @@ ogr_F_GetFieldAsDoubleList: function [a0 a1 a2][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsDoubleList|ptr|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2])))
 ]
 
+ogr_F_GetFieldAsStringList: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsStringList|ptr|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1])))
+]
+
 ogr_F_GetFieldAsBinary: function [a0 a1 a2][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_F_GetFieldAsBinary|ptr|ptr,i32,ptr" (ffiEncodeArgs ["ptr" "i32" "ptr"] @[a0 a1 a2])))
 ]
@@ -2463,6 +2559,14 @@ ogr_DS_GetDriver: function [a0][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_GetDriver|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
 
+ogr_DS_CreateLayer: function [a0 a1 a2 a3 a4][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_CreateLayer|ptr|ptr,str,ptr,i32,ptr" (ffiEncodeArgs ["ptr" "str" "ptr" "i32" "ptr"] @[a0 a1 a2 a3 a4])))
+]
+
+ogr_DS_CopyLayer: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_CopyLayer|ptr|ptr,ptr,str,ptr" (ffiEncodeArgs ["ptr" "ptr" "str" "ptr"] @[a0 a1 a2 a3])))
+]
+
 ogr_DS_TestCapability: function [a0 a1][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_DS_TestCapability|i32|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
 ]
@@ -2517,6 +2621,14 @@ ogr_Dr_Open: function [a0 a1 a2][
 
 ogr_Dr_TestCapability: function [a0 a1][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Dr_TestCapability|i32|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+]
+
+ogr_Dr_CreateDataSource: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Dr_CreateDataSource|ptr|ptr,str,ptr" (ffiEncodeArgs ["ptr" "str" "ptr"] @[a0 a1 a2])))
+]
+
+ogr_Dr_CopyDataSource: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OGR_Dr_CopyDataSource|ptr|ptr,ptr,str,ptr" (ffiEncodeArgs ["ptr" "ptr" "str" "ptr"] @[a0 a1 a2 a3])))
 ]
 
 ogr_Dr_DeleteDataSource: function [a0 a1][
@@ -2699,8 +2811,16 @@ osrSetPROJSearchPaths: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRSetPROJSearchPaths|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
 ]
 
+osrGetPROJSearchPaths: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetPROJSearchPaths|ptr|" (ffiEncodeArgs [] @[])))
+]
+
 osrSetPROJAuxDbPaths: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRSetPROJAuxDbPaths|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+osrGetPROJAuxDbPaths: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetPROJAuxDbPaths|ptr|" (ffiEncodeArgs [] @[])))
 ]
 
 osrSetPROJEnableNetwork: function [a0][
@@ -2755,8 +2875,16 @@ osrImportFromEPSGA: function [a0 a1][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRImportFromEPSGA|i32|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1]))
 ]
 
+osrImportFromWkt: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRImportFromWkt|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+]
+
 osrImportFromProj4: function [a0 a1][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRImportFromProj4|i32|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+]
+
+osrImportFromESRI: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRImportFromESRI|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
 ]
 
 osrImportFromPCI: function [a0 a1 a2 a3][
@@ -2795,12 +2923,44 @@ osrImportFromUrl: function [a0 a1][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRImportFromUrl|i32|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
 ]
 
+osrExportToWkt: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToWkt|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+]
+
+osrExportToWktEx: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToWktEx|i32|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2]))
+]
+
+osrExportToPrettyWkt: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToPrettyWkt|i32|ptr,ptr,i32" (ffiEncodeArgs ["ptr" "ptr" "i32"] @[a0 a1 a2]))
+]
+
+osrExportToPROJJSON: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToPROJJSON|i32|ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr"] @[a0 a1 a2]))
+]
+
+osrExportToProj4: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToProj4|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
+]
+
+osrExportToPCI: function [a0 a1 a2 a3][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToPCI|i32|ptr,ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3]))
+]
+
 osrExportToUSGS: function [a0 a1 a2 a3 a4][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToUSGS|i32|ptr,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
 ]
 
+osrExportToXML: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToXML|i32|ptr,ptr,str" (ffiEncodeArgs ["ptr" "ptr" "str"] @[a0 a1 a2]))
+]
+
 osrExportToPanorama: function [a0 a1 a2 a3 a4 a5][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToPanorama|i32|ptr,ptr,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["ptr" "ptr" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4 a5]))
+]
+
+osrExportToMICoordSys: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRExportToMICoordSys|i32|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1]))
 ]
 
 osrMorphToESRI: function [a0][
@@ -2839,6 +2999,10 @@ osrSetAngularUnits: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRSetAngularUnits|i32|ptr,str,f64" (ffiEncodeArgs ["ptr" "str" "f64"] @[a0 a1 a2]))
 ]
 
+osrGetAngularUnits: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAngularUnits|f64|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1])))
+]
+
 osrSetLinearUnits: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRSetLinearUnits|i32|ptr,str,f64" (ffiEncodeArgs ["ptr" "str" "f64"] @[a0 a1 a2]))
 ]
@@ -2849,6 +3013,18 @@ osrSetTargetLinearUnits: function [a0 a1 a2 a3][
 
 osrSetLinearUnitsAndUpdateParameters: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRSetLinearUnitsAndUpdateParameters|i32|ptr,str,f64" (ffiEncodeArgs ["ptr" "str" "f64"] @[a0 a1 a2]))
+]
+
+osrGetLinearUnits: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetLinearUnits|f64|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1])))
+]
+
+osrGetTargetLinearUnits: function [a0 a1 a2][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetTargetLinearUnits|f64|ptr,str,ptr" (ffiEncodeArgs ["ptr" "str" "ptr"] @[a0 a1 a2])))
+]
+
+osrGetPrimeMeridian: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetPrimeMeridian|f64|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1])))
 ]
 
 osrIsGeographic: function [a0][
@@ -3295,6 +3471,10 @@ osrDestroyCRSInfoList: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRDestroyCRSInfoList|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
 ]
 
+osrGetAuthorityListFromDatabase: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OSRGetAuthorityListFromDatabase|ptr|" (ffiEncodeArgs [] @[])))
+]
+
 octNewCoordinateTransformation: function [a0 a1][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::OCTNewCoordinateTransformation|ptr|ptr,ptr" (ffiEncodeArgs ["ptr" "ptr"] @[a0 a1])))
 ]
@@ -3443,6 +3623,10 @@ cplDeclareKnownConfigOption: function [a0 a1][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLDeclareKnownConfigOption|void|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
 ]
 
+cplGetKnownConfigOptions: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetKnownConfigOptions|ptr|" (ffiEncodeArgs [] @[])))
+]
+
 cplUnsubscribeToSetConfigOption: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLUnsubscribeToSetConfigOption|void|i32" (ffiEncodeArgs ["i32"] @[a0]))
 ]
@@ -3451,8 +3635,16 @@ cplFreeConfig: function [][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFreeConfig|void|" (ffiEncodeArgs [] @[]))
 ]
 
+cplGetConfigOptions: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetConfigOptions|ptr|" (ffiEncodeArgs [] @[])))
+]
+
 cplSetConfigOptions: function [a0][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLSetConfigOptions|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+cplGetThreadLocalConfigOptions: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetThreadLocalConfigOptions|ptr|" (ffiEncodeArgs [] @[])))
 ]
 
 cplSetThreadLocalConfigOptions: function [a0][
@@ -3479,8 +3671,24 @@ cplRealloc: function [a0 a1][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLRealloc|ptr|ptr,u64" (ffiEncodeArgs ["ptr" "u64"] @[a0 a1])))
 ]
 
+cplReadLineL: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLReadLineL|str|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
 cplAtof: function [a0][
     return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLAtof|f64|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+cplStrtod: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLStrtod|f64|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1])))
+]
+
+cplStrtodM: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLStrtodM|f64|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1])))
+]
+
+cplStrtof: function [a0 a1][
+    return (to :floating (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLStrtof|f32|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1])))
 ]
 
 cplAtofM: function [a0][
@@ -3611,6 +3819,10 @@ cplFinderClean: function [][
     return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLFinderClean|void|" (ffiEncodeArgs [] @[]))
 ]
 
+cplStat: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLStat|i32|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1]))
+]
+
 cplGetSharedList: function [a0][
     return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetSharedList|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
 ]
@@ -3659,6 +3871,14 @@ cplGetRemainingFileDescriptorCount: function [][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetRemainingFileDescriptorCount|i32|" (ffiEncodeArgs [] @[]))
 ]
 
+cplCreateZip: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLCreateZip|ptr|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1])))
+]
+
+cplCreateFileInZip: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLCreateFileInZip|i32|ptr,str,ptr" (ffiEncodeArgs ["ptr" "str" "ptr"] @[a0 a1 a2]))
+]
+
 cplWriteFileInZip: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLWriteFileInZip|i32|ptr,ptr,i32" (ffiEncodeArgs ["ptr" "ptr" "i32"] @[a0 a1 a2]))
 ]
@@ -3691,6 +3911,38 @@ cplIsPowerOfTwo: function [a0][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLIsPowerOfTwo|i32|u32" (ffiEncodeArgs ["u32"] @[a0]))
 ]
 
+cslAddString: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLAddString|ptr|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
+]
+
+cslAddStringMayFail: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLAddStringMayFail|ptr|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1])))
+]
+
+cslDestroy: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLDestroy|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+cslTokenizeString: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLTokenizeString|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+cslTokenizeStringComplex: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLTokenizeStringComplex|ptr|str,str,i32,i32" (ffiEncodeArgs ["str" "str" "i32" "i32"] @[a0 a1 a2 a3])))
+]
+
+cslTokenizeString2: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLTokenizeString2|ptr|str,str,i32" (ffiEncodeArgs ["str" "str" "i32"] @[a0 a1 a2])))
+]
+
+cslLoad: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLLoad|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+cslInsertString: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLInsertString|ptr|ptr,i32,str" (ffiEncodeArgs ["ptr" "i32" "str"] @[a0 a1 a2])))
+]
+
 cslTestBoolean: function [a0][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLTestBoolean|i32|str" (ffiEncodeArgs ["str"] @[a0]))
 ]
@@ -3705,6 +3957,26 @@ cplTestBool: function [a0][
 
 cplParseMemorySize: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLParseMemorySize|i32|str,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr"] @[a0 a1 a2]))
+]
+
+cplParseNameValue: function [a0 a1][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLParseNameValue|str|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1]))
+]
+
+cslAddNameValue: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLAddNameValue|ptr|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2])))
+]
+
+cslSetNameValue: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLSetNameValue|ptr|ptr,str,str" (ffiEncodeArgs ["ptr" "str" "str"] @[a0 a1 a2])))
+]
+
+cslSetNameValueSeparator: function [a0 a1][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLSetNameValueSeparator|void|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+]
+
+cslParseCommandLine: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CSLParseCommandLine|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
 ]
 
 cplHexToBinary: function [a0 a1][
@@ -3761,5 +4033,453 @@ cplStrlenUTF8Ex: function [a0][
 
 cplCanRecode: function [a0 a1 a2][
     return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLCanRecode|i32|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+]
+
+vSIStat: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIStat|i32|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1]))
+]
+
+vsifOpenL: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFOpenL|ptr|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
+]
+
+vsifOpenExL: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFOpenExL|ptr|str,str,i32" (ffiEncodeArgs ["str" "str" "i32"] @[a0 a1 a2])))
+]
+
+vsifCloseL: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFCloseL|i32|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifSeekL: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFSeekL|i32|ptr,u64,i32" (ffiEncodeArgs ["ptr" "u64" "i32"] @[a0 a1 a2]))
+]
+
+vsifTellL: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFTellL|u64|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSIRewindL: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRewindL|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifReadL: function [a0 a1 a2 a3][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFReadL|u64|ptr,u64,u64,ptr" (ffiEncodeArgs ["ptr" "u64" "u64" "ptr"] @[a0 a1 a2 a3]))
+]
+
+vsifReadMultiRangeL: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFReadMultiRangeL|i32|i32,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["i32" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4]))
+]
+
+vsifWriteL: function [a0 a1 a2 a3][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFWriteL|u64|ptr,u64,u64,ptr" (ffiEncodeArgs ["ptr" "u64" "u64" "ptr"] @[a0 a1 a2 a3]))
+]
+
+vsifClearErrL: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFClearErrL|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifErrorL: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFErrorL|i32|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifEofL: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFEofL|i32|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifTruncateL: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFTruncateL|i32|ptr,u64" (ffiEncodeArgs ["ptr" "u64"] @[a0 a1]))
+]
+
+vsifFlushL: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFFlushL|i32|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vsifPutcL: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFPutcL|i32|i32,ptr" (ffiEncodeArgs ["i32" "ptr"] @[a0 a1]))
+]
+
+vsifGetRangeStatusL: function [a0 a1 a2][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFGetRangeStatusL|i32|ptr,u64,u64" (ffiEncodeArgs ["ptr" "u64" "u64"] @[a0 a1 a2]))
+]
+
+vSIIngestFile: function [a0 a1 a2 a3 a4][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIIngestFile|i32|ptr,str,ptr,ptr,i64" (ffiEncodeArgs ["ptr" "str" "ptr" "ptr" "i64"] @[a0 a1 a2 a3 a4]))
+]
+
+vSIOverwriteFile: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIOverwriteFile|i32|ptr,str" (ffiEncodeArgs ["ptr" "str"] @[a0 a1]))
+]
+
+vSIIsCaseSensitiveFS: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIIsCaseSensitiveFS|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSISupportsSparseFiles: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISupportsSparseFiles|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIIsLocal: function [a0][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIIsLocal|bool|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+vSISupportsSequentialWrite: function [a0 a1][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISupportsSequentialWrite|bool|str,bool" (ffiEncodeArgs ["str" "bool"] @[a0 a1])))
+]
+
+vSISupportsRandomWrite: function [a0 a1][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISupportsRandomWrite|bool|str,bool" (ffiEncodeArgs ["str" "bool"] @[a0 a1])))
+]
+
+vSIHasOptimizedReadMultiRange: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIHasOptimizedReadMultiRange|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetActualURL: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetActualURL|str|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetFileSystemOptions: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetFileSystemOptions|str|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetFileSystemsPrefixes: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetFileSystemsPrefixes|ptr|" (ffiEncodeArgs [] @[])))
+]
+
+vsifGetNativeFileDescriptorL: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFGetNativeFileDescriptorL|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+vSISetPathSpecificOption: function [a0 a1 a2][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISetPathSpecificOption|void|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+]
+
+vSIClearPathSpecificOptions: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIClearPathSpecificOptions|void|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetPathSpecificOption: function [a0 a1 a2][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetPathSpecificOption|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+]
+
+vSISetCredential: function [a0 a1 a2][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISetCredential|void|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+]
+
+vSIClearCredentials: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIClearCredentials|void|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetCredential: function [a0 a1 a2][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetCredential|str|str,str,str" (ffiEncodeArgs ["str" "str" "str"] @[a0 a1 a2]))
+]
+
+vSICalloc: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICalloc|ptr|u64,u64" (ffiEncodeArgs ["u64" "u64"] @[a0 a1])))
+]
+
+vSIMalloc: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMalloc|ptr|u64" (ffiEncodeArgs ["u64"] @[a0])))
+]
+
+vsifree: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFree|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSIRealloc: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRealloc|ptr|ptr,u64" (ffiEncodeArgs ["ptr" "u64"] @[a0 a1])))
+]
+
+vSIMallocAligned: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMallocAligned|ptr|u64,u64" (ffiEncodeArgs ["u64" "u64"] @[a0 a1])))
+]
+
+vSIMallocAlignedAuto: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMallocAlignedAuto|ptr|u64" (ffiEncodeArgs ["u64"] @[a0])))
+]
+
+vsifreeAligned: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFreeAligned|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSIMallocAlignedAutoVerbose: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMallocAlignedAutoVerbose|ptr|u64,str,i32" (ffiEncodeArgs ["u64" "str" "i32"] @[a0 a1 a2])))
+]
+
+vSIMalloc2: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMalloc2|ptr|u64,u64" (ffiEncodeArgs ["u64" "u64"] @[a0 a1])))
+]
+
+vSIMalloc3: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMalloc3|ptr|u64,u64,u64" (ffiEncodeArgs ["u64" "u64" "u64"] @[a0 a1 a2])))
+]
+
+vSIMallocVerbose: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMallocVerbose|ptr|u64,str,i32" (ffiEncodeArgs ["u64" "str" "i32"] @[a0 a1 a2])))
+]
+
+vSIMalloc2Verbose: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMalloc2Verbose|ptr|u64,u64,str,i32" (ffiEncodeArgs ["u64" "u64" "str" "i32"] @[a0 a1 a2 a3])))
+]
+
+vSIMalloc3Verbose: function [a0 a1 a2 a3 a4][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMalloc3Verbose|ptr|u64,u64,u64,str,i32" (ffiEncodeArgs ["u64" "u64" "u64" "str" "i32"] @[a0 a1 a2 a3 a4])))
+]
+
+vSICallocVerbose: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICallocVerbose|ptr|u64,u64,str,i32" (ffiEncodeArgs ["u64" "u64" "str" "i32"] @[a0 a1 a2 a3])))
+]
+
+vSIReallocVerbose: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIReallocVerbose|ptr|ptr,u64,str,i32" (ffiEncodeArgs ["ptr" "u64" "str" "i32"] @[a0 a1 a2 a3])))
+]
+
+cplGetPhysicalRAM: function [][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetPhysicalRAM|i64|" (ffiEncodeArgs [] @[]))
+]
+
+cplGetUsablePhysicalRAM: function [][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::CPLGetUsablePhysicalRAM|i64|" (ffiEncodeArgs [] @[]))
+]
+
+vSIReadDir: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIReadDir|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+vSIReadDirRecursive: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIReadDirRecursive|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+vSIReadDirEx: function [a0 a1][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIReadDirEx|ptr|str,i32" (ffiEncodeArgs ["str" "i32"] @[a0 a1])))
+]
+
+vSISiblingFiles: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISiblingFiles|ptr|str" (ffiEncodeArgs ["str"] @[a0])))
+]
+
+vSIGetDirectorySeparator: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetDirectorySeparator|str|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIOpenDir: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIOpenDir|ptr|str,i32,ptr" (ffiEncodeArgs ["str" "i32" "ptr"] @[a0 a1 a2])))
+]
+
+vSIGetNextDirEntry: function [a0][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetNextDirEntry|ptr|ptr" (ffiEncodeArgs ["ptr"] @[a0])))
+]
+
+vSICloseDir: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICloseDir|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSIMkdir: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMkdir|i32|str,i64" (ffiEncodeArgs ["str" "i64"] @[a0 a1]))
+]
+
+vSIMkdirRecursive: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMkdirRecursive|i32|str,i64" (ffiEncodeArgs ["str" "i64"] @[a0 a1]))
+]
+
+vSIRmdir: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRmdir|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIRmdirRecursive: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRmdirRecursive|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIUnlink: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIUnlink|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIRename: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRename|i32|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1]))
+]
+
+vSIMultipartUploadGetCapabilities: function [a0 a1 a2 a3 a4 a5 a6][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMultipartUploadGetCapabilities|i32|str,ptr,ptr,ptr,ptr,ptr,ptr" (ffiEncodeArgs ["str" "ptr" "ptr" "ptr" "ptr" "ptr" "ptr"] @[a0 a1 a2 a3 a4 a5 a6]))
+]
+
+vSIAbortPendingUploads: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIAbortPendingUploads|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIGetDiskFreeSpace: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetDiskFreeSpace|i64|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSINetworkStatsReset: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSINetworkStatsReset|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallMemFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallMemFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallLargeFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallLargeFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallSubFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallSubFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallCurlFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallCurlFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSICurlClearCache: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICurlClearCache|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSICurlPartialClearCache: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICurlPartialClearCache|void|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIInstallCurlStreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallCurlStreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallS3FileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallS3FileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallS3StreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallS3StreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallGSFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallGSFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallGSStreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallGSStreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallAzureFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallAzureFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallAzureStreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallAzureStreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallADLSFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallADLSFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallOSSFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallOSSFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallOSSStreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallOSSStreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallSwiftFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallSwiftFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallSwiftStreamingFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallSwiftStreamingFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstall7zFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstall7zFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallRarFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallRarFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallGZipFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallGZipFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallZipFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallZipFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallStdinHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallStdinHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallHdfsHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallHdfsHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallWebHdfsHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallWebHdfsHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallStdoutHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallStdoutHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallSparseFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallSparseFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallTarFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallTarFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallCachedFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallCachedFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIInstallCryptFileHandler: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallCryptFileHandler|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSISetCryptKey: function [a0 a1][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSISetCryptKey|void|ptr,i32" (ffiEncodeArgs ["ptr" "i32"] @[a0 a1]))
+]
+
+vSICleanupFileManager: function [][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICleanupFileManager|void|" (ffiEncodeArgs [] @[]))
+]
+
+vSIDuplicateFileSystemHandler: function [a0 a1][
+    return (ffiAsBool (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIDuplicateFileSystemHandler|bool|str,str" (ffiEncodeArgs ["str" "str"] @[a0 a1])))
+]
+
+vsifileFromMemBuffer: function [a0 a1 a2 a3][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFileFromMemBuffer|ptr|str,ptr,u64,i32" (ffiEncodeArgs ["str" "ptr" "u64" "i32"] @[a0 a1 a2 a3])))
+]
+
+vSIGetMemFileBuffer: function [a0 a1 a2][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIGetMemFileBuffer|ptr|str,ptr,i32" (ffiEncodeArgs ["str" "ptr" "i32"] @[a0 a1 a2])))
+]
+
+vSIMemGenerateHiddenFilename: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIMemGenerateHiddenFilename|str|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSIAllocFilesystemPluginCallbacksStruct: function [][
+    return (gdalNullIf (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIAllocFilesystemPluginCallbacksStruct|ptr|" (ffiEncodeArgs [] @[])))
+]
+
+vsifreeFilesystemPluginCallbacksStruct: function [a0][
+    return (ffiDoVoid "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIFreeFilesystemPluginCallbacksStruct|void|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSIInstallPluginHandler: function [a0 a1][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIInstallPluginHandler|i32|str,ptr" (ffiEncodeArgs ["str" "ptr"] @[a0 a1]))
+]
+
+vSIRemovePluginHandler: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSIRemovePluginHandler|i32|str" (ffiEncodeArgs ["str"] @[a0]))
+]
+
+vSITime: function [a0][
+    return (ffiRawCall "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSITime|u64|ptr" (ffiEncodeArgs ["ptr"] @[a0]))
+]
+
+vSICTime: function [a0][
+    return (ffiRawCallS "/opt/homebrew/Cellar/gdal/3.13.2_1/lib/libgdal.dylib::VSICTime|str|u64" (ffiEncodeArgs ["u64"] @[a0]))
 ]
 

@@ -1,0 +1,69 @@
+;===========================================================
+; vector.art - Stage C (SPEC 22-23, 43)
+;
+; Open a checked-in GeoJSON, walk the layer, read FIDs / fields,
+; export geometry to WKT, and release every owned handle. No leaks:
+; features are destroyed exactly once, geometry is borrowed.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+
+check: function [label got expected] [
+    if got = expected [
+        print ["PASS" label]
+    ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    ds: openVector "tests/fixtures/points.geojson"
+    if null? ds [ panic "could not open tests/fixtures/points.geojson" ]
+
+    check "layer count" (layerCount ds) 1
+
+    layer: layerNamed ds "points"
+    check "layer not null" (null? layer) false
+
+    resetReading layer
+    check "feature count" (featureCount layer) 2
+
+    fids: []
+    names: []
+    wkts: []
+    f: nextFeature layer
+    while [not? null? f] [
+        fids: fids ++ @[(featureId f)]
+        names: names ++ @[(fieldAsString f 0)]
+        wkt: featureWkt f
+        wkts: wkts ++ @[wkt]
+        destroyFeature f
+        f: nextFeature layer
+    ]
+
+    check "fids" fids [1 2]
+    check "names" names ["alpha" "beta"]
+    check "first wkt" (wkts\0) "POINT (77.1 31.0)"
+    check "second wkt" (wkts\1) "POINT (77.2 31.1)"
+
+    ; geometry is borrowed: rewind and grab a fresh feature
+    resetReading layer
+    f2: nextFeature layer
+    g: featureGeometry f2
+    check "borrowed geometry name" (geometryName g) "POINT"
+    destroyFeature f2
+
+    gdalClose ds
+    print "-------------------------------------"
+    if t\failures = 0 [
+        print "vector: all tests passed"
+    ]
+    if not? (t\failures = 0) [
+        print ["vector:" t\failures "failures"]
+        panic "vector: FAILED"
+    ]
+]

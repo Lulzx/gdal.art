@@ -419,6 +419,14 @@ gdalOwnership: #[
         ownership: "unknown"
         release: null
     ]
+    "OGR_DS_CreateLayer": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_DS_CopyLayer": #[
+        ownership: "unknown"
+        release: null
+    ]
     "OGR_DS_ExecuteSQL": #[
         ownership: "unknown"
         release: null
@@ -428,6 +436,14 @@ gdalOwnership: #[
         release: null
     ]
     "OGR_Dr_Open": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_Dr_CreateDataSource": #[
+        ownership: "unknown"
+        release: null
+    ]
+    "OGR_Dr_CopyDataSource": #[
         ownership: "unknown"
         release: null
     ]

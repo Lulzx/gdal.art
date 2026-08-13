@@ -20,7 +20,7 @@ gsClassifyReturn: function [gcrDesc] [
     gcrKind: gcrDesc\kind
     if gcrKind = "fnptr" [ return #[disp: "DEFERRED" reason: "function pointer return"] ]
     if gcrKind = "struct" [ return #[disp: "DEFERRED" reason: "struct return"] ]
-    if gcrKind = "charstar2" [ return #[disp: "DEFERRED" reason: "string list return"] ]
+    if gcrKind = "charstar2" [ return #[disp: "BOUND" reason: ""] ]
     if gcrKind = "charstarN" [ return #[disp: "DEFERRED" reason: "pointer depth"] ]
     if gcrKind = "strlist" [ return #[disp: "DEFERRED" reason: "string list return"] ]
     if gcrKind = "str" [
@@ -37,7 +37,7 @@ gsClassifyParam: function [gcpDesc] [
     gcpKind: gcpDesc\kind
     if gcpKind = "fnptr" [ return #[disp: "DEFERRED" reason: "callback argument"] ]
     if gcpKind = "struct" [ return #[disp: "DEFERRED" reason: "struct by value"] ]
-    if gcpKind = "charstar2" [ return #[disp: "DEFERRED" reason: "string list output"] ]
+    if gcpKind = "charstar2" [ return #[disp: "BOUND" reason: ""] ]
     if gcpKind = "charstarN" [ return #[disp: "DEFERRED" reason: "pointer depth"] ]
     if gcpKind = "str" [
         if gcpDesc\mutable [ return #[disp: "DEFERRED" reason: "mutable string buffer"] ]

@@ -28,17 +28,24 @@ installed GDAL headers
 
 ## Status
 
-Stage A (see `SPEC.md` §41): the generation pipeline is proven end to end.
+Stages A–C (see `SPEC.md` §41–§43): generation is proven end to end, and
+both halves of GDAL are exercised — a GeoTIFF is opened and read through
+`GDALRasterIO`, and a GeoJSON layer is walked with WKT export through the
+`char**` out-slot.
+
 For the installed GDAL (currently **3.13.2** on macOS arm64), generation
-discovers **1399** public C functions, of which **820** are bound and
-**579** are deferred with an explicit reason. Unsupported declarations are
+discovers **1549** public C functions, of which **1119** are bound and
+**430** are deferred with an explicit reason. Unsupported declarations are
 reported, never silently dropped.
 
 ```text
-raster core   12 / 13   (92%)
-vector core   15 / 17   (88%)
-SRS core       7 / 10   (70%)
+raster core   13 / 13   (100%)
+vector core   16 / 17   (94%)
+SRS core      10 / 10   (100%)
 ```
+
+`make test` runs three suites: the Stage A generation round-trip, the
+`SPEC` §21 raster success test, and the §23 vector success test.
 
 ## Requirements
 

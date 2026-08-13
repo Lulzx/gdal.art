@@ -8,13 +8,13 @@
 
 ; open a dataset for read-only raster access
 openDataset: function [odPath][
-    gdalAllRegister
+    odR: gdalAllRegister
     return (gdalOpenEx odPath GDAL_OF_RASTER null null null)
 ]
 
 ; open a dataset allowing vector drivers (GeoJSON/GPKG) in read mode
 openVector: function [ovPath][
-    gdalAllRegister
+    ovR: gdalAllRegister
     return (gdalOpenEx ovPath GDAL_OF_VECTOR null null null)
 ]
 
@@ -54,7 +54,7 @@ readBand: function [rbDs rbIndex] [
     rbBuf: ffiAlloc (rbN * rbBps)
     rbRc: gdalRasterIO rbB GF_Read 0 0 rbW rbH rbBuf rbW rbH rbT 0 0
     if not? (rbRc = 0) [
-        ffiFree rbBuf
+        rbF1: ffiFree rbBuf
         return null
     ]
     rbOut: []
@@ -71,7 +71,7 @@ readBand: function [rbDs rbIndex] [
         rbOut: rbOut ++ @[rbV]
         rbI: rbI + 1
     ]
-    ffiFree rbBuf
+    rbF2: ffiFree rbBuf
     return rbOut
 ]
 
@@ -80,7 +80,7 @@ geotransform: function [gtDs] [
     gtBuf: ffiAlloc 48
     gtRc: gdalGetGeoTransform gtDs gtBuf
     if not? (gtRc = 0) [
-        ffiFree gtBuf
+        gtF1: ffiFree gtBuf
         return null
     ]
     gtOut: []
@@ -89,9 +89,54 @@ geotransform: function [gtDs] [
         gtOut: gtOut ++ @[(ffiLoadF64 gtBuf (gtI * 8))]
         gtI: gtI + 1
     ]
-    ffiFree gtBuf
+    gtF2: ffiFree gtBuf
     return gtOut
 ]
 
 ; the dataset's WKT projection (const char*, borrowed)
 projection: function [prDs][ return (gdalGetProjectionRef prDs) ]
+
+;-----------------------------------------------------------
+; vector / OGR sugar
+;-----------------------------------------------------------
+
+layerCount: function [lcDs][ return (gdalDatasetGetLayerCount lcDs) ]
+layerAt: function [laDs laI][ return (gdalDatasetGetLayer laDs laI) ]
+layerNamed: function [lnDs lnName][ return (gdalDatasetGetLayerByName lnDs lnName) ]
+
+resetReading: function [rrLayer][ return (ogr_L_ResetReading rrLayer) ]
+nextFeature: function [nfLayer][ return (ogr_L_GetNextFeature nfLayer) ]
+featureCount: function [fcLayer][ return (ogr_L_GetFeatureCount fcLayer 0) ]
+destroyFeature: function [dfF][ return (ogr_F_Destroy dfF) ]
+
+featureId: function [fiF][ return (ogr_F_GetFID fiF) ]
+fieldCount: function [fncF][ return (ogr_F_GetFieldCount fncF) ]
+fieldAsString: function [fasF fasI][ return (ogr_F_GetFieldAsString fasF fasI) ]
+featureGeometry: function [fgF][ return (ogr_F_GetGeometryRef fgF) ]
+
+; export a geometry to WKT via the OGR_G_ExportToWkt char** out-slot
+; (SPEC 13). The returned string is freed with GDAL's allocator (SPEC 12).
+geometryWkt: function [gwGeom] [
+    gwSlot: ffiAlloc 8
+    gwS1: ffiStorePtr gwSlot 0 0
+    gwRc: ogr_G_ExportToWkt gwGeom gwSlot
+    if not? (gwRc = 0) [
+        gwS2: ffiFree gwSlot
+        return null
+    ]
+    gwPtr: ffiLoadPtr gwSlot 0
+    gwOut: null
+    if not? (gwPtr = 0) [ gwOut: ffiLoadCString gwPtr ]
+    if not? (gwPtr = 0) [ gwS3: vsifree gwPtr ]
+    gwS4: ffiFree gwSlot
+    return gwOut
+]
+
+featureWkt: function [fwF][
+    fwG: ogr_F_GetGeometryRef fwF
+    if null? fwG [ return null ]
+    return (geometryWkt fwG)
+]
+
+geometryName: function [gnG][ return (ogr_G_GetGeometryName gnG) ]
+geometryType: function [gtG][ return (ogr_G_GetGeometryType gtG) ]

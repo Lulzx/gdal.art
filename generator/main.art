@@ -16,7 +16,7 @@ gsFfiVersion: "0.2.0"
 gsAdapterVersion: 3
 gsHeaders: [
     "gdal_fwd.h" "gdal.h" "ogr_core.h" "ogr_api.h" "ogr_srs_api.h"
-    "cpl_error.h" "cpl_conv.h" "cpl_string.h"
+    "cpl_error.h" "cpl_conv.h" "cpl_string.h" "cpl_vsi.h"
 ]
 gsOutRoot: "."
 
