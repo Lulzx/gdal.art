@@ -45,9 +45,7 @@ gsVerifySymbols: function [gvsFns] [
 gsAbiProbeSource: function [] [
     gapS: ""
     gapS: gapS ++ "#include <stdio.h>\n"
-    gapS: gapS ++ "#include \"gdal.h\"\n"
-    gapS: gapS ++ "#include \"ogr_api.h\"\n"
-    gapS: gapS ++ "#include \"ogr_srs_api.h\"\n"
+    loop gsHeaders 'gapH [ gapS: gapS ++ "#include \"" ++ (to :string gapH) ++ "\"\n" ]
     gapS: gapS ++ "int main(void) {\n"
     gapNames: sort (keys gsConstants)
     loop gapNames 'gapN [
@@ -56,4 +54,40 @@ gsAbiProbeSource: function [] [
     gapS: gapS ++ "    return 0;\n"
     gapS: gapS ++ "}\n"
     return gapS
+]
+
+; compile and run the constant probe; compare every value against
+; gsConstants (SPEC 28). Returns #[ok: reason:]
+gsVerifyAbi: function [] [
+    gvaSrc: gsAbiProbeSource
+    write gvaSrc ".gen_tmp_abi.c"
+    gvaC: gsExecCode ("cc -I" ++ gsIncludeDir ++ " .gen_tmp_abi.c -o .gen_tmp_abi 2>&1")
+    if not? ((gvaC\code) = 0) [
+        print ["abi probe compile failed:" gvaC\output]
+        gvaQ: gsExecCode "rm -f .gen_tmp_abi.c .gen_tmp_abi"
+        return #[ok: false reason: "compile"]
+    ]
+    gvaR: gsExecCode "./.gen_tmp_abi 2>&1"
+    gvaQ: gsExecCode "rm -f .gen_tmp_abi.c .gen_tmp_abi"
+    if not? ((gvaR\code) = 0) [
+        print ["abi probe run failed:" gvaR\output]
+        return #[ok: false reason: "run"]
+    ]
+    gvaBad: []
+    loop (split.lines (gvaR\output)) 'gvaLine [
+        gvaL: strip gvaLine
+        if not? (empty? gvaL) [
+            gvaParts: split.by: " " gvaL
+            if (size gvaParts) >= 2 [
+                gvaName: to :string (gvaParts\0)
+                gvaVal: gsParseInt (to :string (gvaParts\1))
+                if contains? (keys gsConstants) gvaName [
+                    if not? ((get gsConstants gvaName) = gvaVal) [
+                        gvaBad: gvaBad ++ @[(gvaName ++ " expected " ++ (to :string (get gsConstants gvaName)) ++ " got " ++ (to :string gvaVal))]
+                    ]
+                ]
+            ]
+        ]
+    ]
+    return #[ok: (empty? gvaBad) reason: gvaBad]
 ]

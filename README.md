@@ -50,7 +50,7 @@ declarations are reported, never silently dropped.
 
 ```text
 raster core   13 / 13   (100%)
-vector core   16 / 17   (94%)
+vector core   17 / 17   (100%)
 SRS core      10 / 10   (100%)
 ```
 

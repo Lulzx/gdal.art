@@ -408,6 +408,14 @@ do [
         if not? gsDetOk [ panic "gdal.art: generation is non-deterministic" ]
         print "determinism: OK"
 
+        ; ABI probe: every generated constant must match compiled C (SPEC 28)
+        gsAbiR: gsVerifyAbi
+        if not? gsAbiR\ok [
+            print ["abi probe mismatches:" gsAbiR\reason]
+            panic "gdal.art: ABI probe failed"
+        ]
+        print "abi probe: OK"
+
         ; golden compare only when installed GDAL matches the pin
         if gsVersion = gsPin [
             gsGoldTmp: ".gen_tmp_golden"
