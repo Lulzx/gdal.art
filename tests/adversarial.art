@@ -48,7 +48,9 @@ do [
     ]
 
     ; Large enough to catch accidental quadratic collection/iteration behavior.
-    mem: createVectorDataset "MEM" "hard_features"
+    memDriver: "Memory"
+    if gdalAtLeast 3 11 0 [ memDriver: "MEM" ]
+    mem: createVectorDataset memDriver "hard_features"
     layer: createLayer mem "many" null wkbPoint
     check "memory layer" (null? layer) false
     addField layer "n" OFTInteger
