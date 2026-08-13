@@ -8,11 +8,13 @@
 
 ; open a dataset for read-only raster access
 openDataset: function [odPath][
+    gdalAllRegister
     return (gdalOpenEx odPath GDAL_OF_RASTER null null null)
 ]
 
 ; open a dataset allowing vector drivers (GeoJSON/GPKG) in read mode
 openVector: function [ovPath][
+    gdalAllRegister
     return (gdalOpenEx ovPath GDAL_OF_VECTOR null null null)
 ]
 
@@ -23,3 +25,73 @@ closeDataset: function [cdDs][
 rasterWidth: function [rwDs][ return (gdalGetRasterXSize rwDs) ]
 rasterHeight: function [rhDs][ return (gdalGetRasterYSize rhDs) ]
 rasterCount: function [rcDs][ return (gdalGetRasterCount rcDs) ]
+
+; bytes per pixel for a GDALDataType
+bandBytes: function [bbT] [
+    if bbT = GDT_Byte [ return 1 ]
+    if bbT = GDT_UInt16 [ return 2 ]
+    if bbT = GDT_Int16 [ return 2 ]
+    if bbT = GDT_UInt32 [ return 4 ]
+    if bbT = GDT_Int32 [ return 4 ]
+    if bbT = GDT_Float32 [ return 4 ]
+    if bbT = GDT_Float64 [ return 8 ]
+    return 0
+]
+
+; data type code of a band (GDT_*)
+bandDataType: function [bdBand][ return (gdalGetRasterDataType bdBand) ]
+
+; read one band into a flat block of Arturo numbers (row-major)
+readBand: function [rbDs rbIndex] [
+    rbB: gdalGetRasterBand rbDs rbIndex
+    if null? rbB [ return null ]
+    rbW: gdalGetRasterBandXSize rbB
+    rbH: gdalGetRasterBandYSize rbB
+    rbT: gdalGetRasterDataType rbB
+    rbBps: bandBytes rbT
+    if rbBps = 0 [ return null ]
+    rbN: rbW * rbH
+    rbBuf: ffiAlloc (rbN * rbBps)
+    rbRc: gdalRasterIO rbB GF_Read 0 0 rbW rbH rbBuf rbW rbH rbT 0 0
+    if not? (rbRc = 0) [
+        ffiFree rbBuf
+        return null
+    ]
+    rbOut: []
+    rbI: 0
+    while [rbI < rbN] [
+        rbV: 0
+        if rbT = GDT_Byte [ rbV: ffiLoadU8 rbBuf rbI ]
+        if rbT = GDT_UInt16 [ rbV: ffiLoadU16 rbBuf (rbI * 2) ]
+        if rbT = GDT_Int16 [ rbV: ffiLoadI16 rbBuf (rbI * 2) ]
+        if rbT = GDT_UInt32 [ rbV: ffiLoadU32 rbBuf (rbI * 4) ]
+        if rbT = GDT_Int32 [ rbV: ffiLoadI32 rbBuf (rbI * 4) ]
+        if rbT = GDT_Float32 [ rbV: ffiLoadF32 rbBuf (rbI * 4) ]
+        if rbT = GDT_Float64 [ rbV: ffiLoadF64 rbBuf (rbI * 8) ]
+        rbOut: rbOut ++ @[rbV]
+        rbI: rbI + 1
+    ]
+    ffiFree rbBuf
+    return rbOut
+]
+
+; the affine geotransform as [gt0 gt1 gt2 gt3 gt4 gt5]
+geotransform: function [gtDs] [
+    gtBuf: ffiAlloc 48
+    gtRc: gdalGetGeoTransform gtDs gtBuf
+    if not? (gtRc = 0) [
+        ffiFree gtBuf
+        return null
+    ]
+    gtOut: []
+    gtI: 0
+    while [gtI < 6] [
+        gtOut: gtOut ++ @[(ffiLoadF64 gtBuf (gtI * 8))]
+        gtI: gtI + 1
+    ]
+    ffiFree gtBuf
+    return gtOut
+]
+
+; the dataset's WKT projection (const char*, borrowed)
+projection: function [prDs][ return (gdalGetProjectionRef prDs) ]

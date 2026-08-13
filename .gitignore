@@ -11,3 +11,4 @@ arturo-ffi/tests/libcprobe.dylib
 # generated/ and main.art are checked in; these are only temp dirs
 .gen_tmp_*
 .DS_Store
+*.aux.xml

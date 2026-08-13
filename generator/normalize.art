@@ -45,11 +45,10 @@ gsClassifyParam: function [gcpDesc] [
     ]
     if gcpKind = "strlist" [ return #[disp: "BOUND" reason: ""] ]
     if gcpKind = "ptr" [
-        ; a pointer to a scalar is an out/in parameter (Stage E)
-        if not? (null = (gsScalarLookup (gcpDesc\baseCore))) [
-            if contains? (gcpDesc\ctype) "const" [ return #[disp: "DEFERRED" reason: "input array"] ]
-            return #[disp: "DEFERRED" reason: "output parameter"]
-        ]
+        ; a pointer argument is faithful at the raw layer (SPEC 14):
+        ; the generated binding passes `ptr` and the sugar handles the
+        ; input-array / output-parameter ergonomics. Only genuinely
+        ; unrepresentable pointer shapes are deferred.
         return #[disp: "BOUND" reason: ""]
     ]
     if gcpKind = "unknown" [ return #[disp: "DEFERRED" reason: "unsupported type"] ]

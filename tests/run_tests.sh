@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-for t in tests/generation.art; do
+for t in tests/generation.art tests/raster.art; do
     echo "==== $t ===="
     arturo "$t"
     echo

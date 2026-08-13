@@ -1,0 +1,57 @@
+;===========================================================
+; raster.art - Stage B (SPEC 21, 42)
+;
+; Open a checked-in fixture GeoTIFF, read dimensions / band count /
+; pixels through the generated bindings, and close. No bespoke GDAL
+; C code; everything goes through arturo-ffi.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+
+check: function [label got expected] [
+    if got = expected [
+        print ["PASS" label]
+    ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    ds: openDataset "tests/fixtures/tiny.tif"
+    if null? ds [ panic "could not open tests/fixtures/tiny.tif" ]
+
+    check "width" (rasterWidth ds) 4
+    check "height" (rasterHeight ds) 3
+    check "band count" (rasterCount ds) 1
+
+    band: gdalGetRasterBand ds 1
+    check "band is not null" (null? band) false
+    check "band data type" (bandDataType band) GDT_Float32
+    check "band width" (gdalGetRasterBandXSize band) 4
+    check "band height" (gdalGetRasterBandYSize band) 3
+
+    expected: [100.0 150.0 200.0 250.0 90.0 140.0 190.0 240.0 80.0 130.0 180.0 230.0]
+    pixels: readBand ds 1
+    check "pixel values" pixels expected
+
+    gt: geotransform ds
+    negSmall: 0.0 - 0.01
+    check "geotransform" gt @[77.0 0.01 0.0 31.0 0.0 negSmall]
+
+    proj: projection ds
+    check "has WGS84 projection" (contains? proj "WGS") true
+
+    closeDataset ds
+    print "-------------------------------------"
+    if t\failures = 0 [
+        print "raster: all tests passed"
+    ]
+    if not? (t\failures = 0) [
+        print ["raster:" t\failures "failures"]
+        panic "raster: FAILED"
+    ]
+]
