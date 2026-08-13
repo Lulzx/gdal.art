@@ -103,10 +103,16 @@ ffiRawCallS: function [ffSTarget ffSArgs] [
 
 ; C probe library built by `make probe` (extension is OS-specific)
 ffiProbeLib: function [] [
+    ffEnvKeys: keys env
+    if contains? ffEnvKeys "ARTURO_FFI_PROBE" [
+        ffProbeEnv: get env "ARTURO_FFI_PROBE"
+        if not? (null = ffProbeEnv) [ return ffProbeEnv ]
+    ]
     ffOs: to :string (sys\os)
-    if ffOs = "Linux" [ return "tests/libcprobe.so" ]
-    if ffOs = "Windows" [ return "tests/libcprobe.dll" ]
-    return "tests/libcprobe.dylib"
+    ffCwd: get env "PWD"
+    if ffOs = "Linux" [ return ffCwd ++ "/tests/libcprobe.so" ]
+    if ffOs = "Windows" [ return ffCwd ++ "\\tests\\libcprobe.dll" ]
+    return ffCwd ++ "/tests/libcprobe.dylib"
 ]
 
 ffiError: function [] [
@@ -137,12 +143,21 @@ ffiEscape: function [ffS] [
 ]
 
 ffiUnescape: function [ffS] [
-    ; unescape `\\` first (via a sentinel) so `\\n` is backslash+n, not newline
-    ffR: replace ffS "\\\\" "<<BS>>"
-    ffR: replace ffR "\\n" "\n"
-    ffR: replace ffR "\\t" "\t"
-    ffR: replace ffR "\\\"" "\""
-    ffR: replace ffR "<<BS>>" "\\"
+    ; single-pass decoding avoids sentinel collisions and preserves `\\n`
+    ffR: ""
+    ffUi: 0
+    ffUn: size ffS
+    while [ffUi < ffUn] [
+        ffUc: to :string (ffS\[ffUi])
+        if and? (ffUc = "\\") ((ffUi + 1) < ffUn) [
+            ffUi: ffUi + 1
+            ffUc: to :string (ffS\[ffUi])
+            if ffUc = "n" -> ffUc: "\n"
+            if ffUc = "t" -> ffUc: "\t"
+        ]
+        append 'ffR ffUc
+        ffUi: ffUi + 1
+    ]
     return ffR
 ]
 
@@ -162,11 +177,12 @@ ffiSplitTop: function [ffS ffSep] [
     ffCurrent: ""
     ffDepth: 0
     ffInstr: false
+    ffEscaped: false
     ffI: 0
     ffN: size ffS
     while [ffI < ffN] [
         ffC: to :string (ffS\[ffI])
-        if ffC = "\"" [
+        if and? (ffC = "\"") (not? ffEscaped) [
             ffInstr: not? ffInstr
         ]
         if not? ffInstr [
@@ -182,15 +198,20 @@ ffiSplitTop: function [ffS ffSep] [
             ]
         ]
         if ffSplitHere [
-            ffResult: ffResult ++ @[ffCurrent]
+            append 'ffResult @[ffCurrent]
             ffCurrent: ""
         ]
         if not? ffSplitHere [
-            ffCurrent: ffCurrent ++ ffC
+            append 'ffCurrent ffC
         ]
+        if ffInstr [
+            if ffC = "\\" [ ffEscaped: not? ffEscaped ]
+            if not? (ffC = "\\") [ ffEscaped: false ]
+        ]
+        if not? ffInstr [ ffEscaped: false ]
         ffI: ffI + 1
     ]
-    if not? (empty? ffCurrent) -> ffResult: ffResult ++ @[ffCurrent]
+    if not? (empty? ffCurrent) -> append 'ffResult @[ffCurrent]
     return ffResult
 ]
 
@@ -337,7 +358,7 @@ ffiEncodeArgs: function [ffTSpecs ffVals] [
     ffParts: []
     ffI: 0
     while [ffI < (size ffTSpecs)] [
-        ffParts: ffParts ++ @[ffiEncodeValue (to :string (ffTSpecs\[ffI])) (ffVals\[ffI])]
+        append 'ffParts @[ffiEncodeValue (to :string (ffTSpecs\[ffI])) (ffVals\[ffI])]
         ffI: ffI + 1
     ]
     return join.with: ";" ffParts
