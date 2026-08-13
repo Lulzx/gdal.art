@@ -19,6 +19,9 @@ check: function [label got expected] [
 ]
 
 do [
+    ; CSL pointer slots must follow the platform ABI, not assume 64-bit.
+    check "pointer ABI size" (ffiSizeof "ptr") ((sys\cpu = "i386")? -> 4 -> 8)
+
     ; --- format conversion: GeoTIFF -> PNG ---
     src: gdalOpen "examples/fixtures/map.tif"
     p1: "/tmp/gdal_art_util_translate.png"

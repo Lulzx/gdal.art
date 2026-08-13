@@ -59,28 +59,30 @@ gdalAtLeast: function [gaMaj gaMin gaPatch] [
 ; returns a pointer owned by the caller (free with cslFree)
 cslFrom: function [csfVals] [
     csfN: size csfVals
-    csfArr: ffiAlloc ((csfN + 1) * 8)
+    csfPtrSize: ffiSizeof "ptr"
+    csfArr: ffiAlloc ((csfN + 1) * csfPtrSize)
     csfI: 0
     while [csfI < csfN] [
         csfS: csfVals\[csfI]
         csfBuf: ffiAlloc ((size csfS) + 1)
         csfW: ffiStoreCString csfBuf csfS
-        csfP: ffiStorePtr csfArr (csfI * 8) csfBuf
+        csfP: ffiStorePtr csfArr (csfI * csfPtrSize) csfBuf
         csfI: csfI + 1
     ]
-    csfZ: ffiStorePtr csfArr (csfN * 8) 0
+    csfZ: ffiStorePtr csfArr (csfN * csfPtrSize) 0
     return csfArr
 ]
 
 ; free a CSL built by cslFrom
 cslFree: function [cslArr] [
     if cslArr = 0 [ return null ]
+    cslPtrSize: ffiSizeof "ptr"
     cslI: 0
     cslP: ffiLoadPtr cslArr 0
     while [not? (cslP = 0)] [
         cslF: ffiFree cslP
         cslI: cslI + 1
-        cslP: ffiLoadPtr cslArr (cslI * 8)
+        cslP: ffiLoadPtr cslArr (cslI * cslPtrSize)
     ]
     cslF2: ffiFree cslArr
 ]
@@ -102,7 +104,7 @@ warpDataset: function [wdDest wdSrc wdOpts] [
     wdR: gdalAllRegister
     wdArg: cslFrom wdOpts
     wdO: gdalWarpAppOptionsNew wdArg null
-    wdBuf: ffiAlloc 8
+    wdBuf: ffiAlloc (ffiSizeof "ptr")
     wdP: ffiStorePtr wdBuf 0 wdSrc
     wdOut: gdalWarp wdDest null 1 wdBuf wdO null
     wdF: ffiFree wdBuf
@@ -116,7 +118,7 @@ vectorTranslateDataset: function [vdDest vdSrc vdOpts] [
     vdR: gdalAllRegister
     vdArg: cslFrom vdOpts
     vdO: gdalVectorTranslateOptionsNew vdArg null
-    vdBuf: ffiAlloc 8
+    vdBuf: ffiAlloc (ffiSizeof "ptr")
     vdP: ffiStorePtr vdBuf 0 vdSrc
     vdOut: gdalVectorTranslate vdDest null 1 vdBuf vdO null
     vdF: ffiFree vdBuf
@@ -271,6 +273,8 @@ writeBand: function [wbDs wbIndex wbPixels] [
     wbBps: bandBytes wbT
     if wbBps = 0 [ return null ]
     wbN: wbW * wbH
+    ; Reject incomplete or oversized input before allocating native memory.
+    if not? ((size wbPixels) = wbN) [ return null ]
     wbBuf: ffiAlloc (wbN * wbBps)
     wbI: 0
     while [wbI < wbN] [
@@ -368,9 +372,9 @@ readBand: function [rbDs rbIndex] [
         rbF1: ffiFree rbBuf
         return null
     ]
-    rbOut: []
-    rbI: 0
-    while [rbI < rbN] [
+    ; Build the result in one pass. Repeated block concatenation makes
+    ; otherwise linear raster reads quadratic for larger bands.
+    rbOut: map 0..(rbN - 1) 'rbI [
         rbV: 0
         if rbT = GDT_Byte [ rbV: ffiLoadU8 rbBuf rbI ]
         if rbT = GDT_UInt16 [ rbV: ffiLoadU16 rbBuf (rbI * 2) ]
@@ -379,8 +383,7 @@ readBand: function [rbDs rbIndex] [
         if rbT = GDT_Int32 [ rbV: ffiLoadI32 rbBuf (rbI * 4) ]
         if rbT = GDT_Float32 [ rbV: ffiLoadF32 rbBuf (rbI * 4) ]
         if rbT = GDT_Float64 [ rbV: ffiLoadF64 rbBuf (rbI * 8) ]
-        rbOut: rbOut ++ @[rbV]
-        rbI: rbI + 1
+        rbV
     ]
     rbF2: ffiFree rbBuf
     return rbOut
@@ -486,7 +489,7 @@ featureFields: function [ffsF] [
 ; export a geometry to WKT via the OGR_G_ExportToWkt char** out-slot
 ; (SPEC 13). The returned string is freed with GDAL's allocator (SPEC 12).
 geometryWkt: function [gwGeom] [
-    gwSlot: ffiAlloc 8
+    gwSlot: ffiAlloc (ffiSizeof "ptr")
     gwS1: ffiStorePtr gwSlot 0 0
     gwRc: ogr_G_ExportToWkt gwGeom gwSlot
     if not? (gwRc = 0) [

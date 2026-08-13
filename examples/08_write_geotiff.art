@@ -20,13 +20,12 @@ do [
     if null? ds [ panic "could not create " ++ path ]
 
     ; a gradient: value grows left -> right and top -> bottom
-    pixels: []
-    i: 0
-    while [i < (w * h)] [
+    ; map builds the block in one pass; repeated block concatenation here is
+    ; quadratic and makes this small example need tens of seconds.
+    pixels: map 0..((w * h) - 1) 'i [
         x: i % w
         y: (i - x) / w
-        pixels: pixels ++ @[(100.0 + x + (y * 2))]
-        i: i + 1
+        100.0 + x + (y * 2)
     ]
 
     negSmall: 0.0 - 0.01
@@ -56,17 +55,14 @@ do [
     print ""
     yy: 0
     while [yy < h] [
-        row: ""
-        xx: 0
-        while [xx < w] [
+        rowChars: map 0..(w - 1) 'xx [
             v: px\[(yy * w) + xx]
             tt: (v - lo) / ((hi - lo) + 0.0001)
             idx: to :integer (tt * 9.0)
             if idx > 9 [ idx: 9 ]
-            row: row ++ (chars\[idx])
-            xx: xx + 1
+            chars\[idx]
         ]
-        print row
+        print (join rowChars)
         yy: yy + 1
     ]
     print ""

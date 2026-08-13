@@ -29,6 +29,8 @@ do [
         wkt: {GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]}
         rc2: setProjection ds wkt
         check "set projection" rc2 0
+        check "reject short band" (writeBand ds 1 [1.0 2.0]) null
+        check "reject long band" (writeBand ds 1 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0]) null
         rc3: writeBand ds 1 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0]
         check "write band" rc3 0
         closeDataset ds
