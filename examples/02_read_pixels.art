@@ -1,0 +1,52 @@
+;===========================================================
+; 02_read_pixels.art
+;
+; Read a raster band into plain Arturo numbers with readBand,
+; compute min/max/mean, and render the band as ASCII art.
+;
+; Run from the repository root:
+;   arturo examples/02_read_pixels.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/map.tif"
+    w: rasterWidth ds
+    h: rasterHeight ds
+    px: readBand ds 1
+    print ["read" (size px) "pixels from a" w "x" h "band"]
+
+    lo: px\0
+    hi: px\0
+    sum: 0.0
+    loop px 'v [
+        if v < lo [ lo: v ]
+        if v > hi [ hi: v ]
+        sum: sum + v
+    ]
+    mean: sum / (size px)
+    print ["min:" lo "max:" hi "mean:" mean]
+
+    ; map pixel values to a ramp and print row by row
+    chars: " .:-=+*#%@"
+    print ""
+    i: 0
+    while [i < h] [
+        row: ""
+        j: 0
+        while [j < w] [
+            v: px\[(i * w) + j]
+            t: (v - lo) / ((hi - lo) + 0.0001)
+            idx: to :integer (t * 9.0)
+            if idx > 9 [ idx: 9 ]
+            row: row ++ (chars\[idx])
+            j: j + 1
+        ]
+        print row
+        i: i + 1
+    ]
+    print ""
+
+    closeDataset ds
+]

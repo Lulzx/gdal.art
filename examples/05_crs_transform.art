@@ -1,0 +1,29 @@
+;===========================================================
+; 05_crs_transform.art
+;
+; Build spatial references from "EPSG:4326" and transform points
+; to a projected CRS (UTM zone 43N). transformPoint returns the
+; transformed [x y] pair.
+;
+; Run from the repository root:
+;   arturo examples/05_crs_transform.art
+;===========================================================
+
+import "gdal"
+
+do [
+    src: spatialReference "EPSG:4326"
+    dst: spatialReference "EPSG:32643"
+    print ["EPSG:4326 -> EPSG:32643 (UTM zone 43N)"]
+    print ""
+
+    ; the four corners of examples/fixtures/map.tif in lon/lat
+    corners: [[77.0 31.0] [77.59 31.0] [77.0 30.55] [77.59 30.55]]
+    loop corners 'p [
+        xy: transformPoint src dst p
+        print ["   (" p\0 "," p\1 ") ->" xy]
+    ]
+
+    destroySpatialReference src
+    destroySpatialReference dst
+]

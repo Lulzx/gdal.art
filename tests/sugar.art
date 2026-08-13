@@ -1,0 +1,73 @@
+;===========================================================
+; sugar.art - the idiomatic layer (open, facts, iteration)
+;
+; Locks in the convenience API over the generated bindings:
+; gdalOpen / gdalOpenMode, rasterSize, bandInfo, metadataItem,
+; eachFeature, eachLayer, featureField, featureFields.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+
+check: function [label got expected] [
+    if got = expected [
+        print ["PASS" label]
+    ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    v: gdalVersion
+    check "version" v "3.13.2"
+
+    ; raster facts
+    ds: gdalOpen "examples/fixtures/map.tif"
+    check "driver" (driverName ds) "GTiff"
+    check "long driver" (driverLongName ds) "GeoTIFF"
+    check "raster size" (rasterSize ds) #[width: 60 height: 45 bands: 1]
+    bi: bandInfo ds 1
+    check "band type" bi\type GDT_Float32
+    check "band width" bi\width 60
+    check "band nodata" bi\nodata null
+    check "metadata item" (metadataItem ds "AREA_OR_POINT") "Area"
+    closeDataset ds
+
+    ; update access
+    uds: gdalOpenMode "examples/fixtures/map.tif" 'update
+    check "update mode opens" (null? uds) false
+    closeDataset uds
+
+    ; layer iteration
+    rds: gdalOpen "examples/fixtures/routes.geojson"
+    check "layer count" (layerCount rds) 1
+    eachLayer rds 'l [
+        check "layer name" (layerName l) "routes"
+    ]
+    closeDataset rds
+
+    ; feature iteration + fields
+    pts: gdalOpen "examples/fixtures/points.geojson"
+    layer: layerNamed pts "points"
+    check "feature count" (featureCount layer) 4
+    resetReading layer
+    f: nextFeature layer
+    check "feature field by name" (featureField f "city") "Dehradun"
+    check "missing field is null" (null? (featureField f "nope")) true
+    fields: featureFields f
+    check "field records" (size fields) 4
+    check "field name" fields\0\name "city"
+    check "field value" fields\0\value "Dehradun"
+    destroyFeature f
+    closeDataset pts
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "sugar: all tests passed" ]
+    if not? (t\failures = 0) [
+        print ["sugar:" t\failures "failures"]
+        panic "sugar: FAILED"
+    ]
+]

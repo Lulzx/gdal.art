@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","features":[
+ {"type":"Feature","id":1,"properties":{"name":"trail","grade":"steep","dist_km":12.5},"geometry":{"type":"LineString","coordinates":[[78.0324,30.3165],[78.0400,30.3300],[78.0550,30.4000],[78.0704,30.4555]]}},
+ {"type":"Feature","id":2,"properties":{"name":"road","grade":"gentle","dist_km":48.0},"geometry":{"type":"LineString","coordinates":[[78.0324,30.3165],[78.1000,30.2800],[78.3245,30.1169]]}}
+]}

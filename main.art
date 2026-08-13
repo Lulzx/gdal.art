@@ -6539,25 +6539,68 @@ gdalOwnership: #[
 ; helpers are convenience only and never replace it.
 ;===========================================================
 
-; open a dataset for read-only raster access
-openDataset: function [odPath][
-    odR: gdalAllRegister
-    return (gdalOpenEx odPath GDAL_OF_RASTER null null null)
+;------------------------------------------------------------------
+; dataset open/close
+;------------------------------------------------------------------
+
+; open a dataset, read-only, any driver (raster or vector). This is the
+; main entry point: gdalOpen "map.tif" or gdalOpen "points.geojson".
+gdalOpen: function [goPath] [
+    goR: gdalAllRegister
+    return (gdalOpenEx goPath GDAL_OF_ALL null null null)
 ]
 
-; open a dataset allowing vector drivers (GeoJSON/GPKG) in read mode
-openVector: function [ovPath][
-    ovR: gdalAllRegister
-    return (gdalOpenEx ovPath GDAL_OF_VECTOR null null null)
+; open with a driver kind / access mode; mode is required:
+;   'raster / 'vector   restrict the driver kind, read-only
+;   'update             any driver, read-write
+gdalOpenMode: function [gomPath gomMode] [
+    goR: gdalAllRegister
+    goFlags: GDAL_OF_ALL
+    if gomMode = 'raster [ goFlags: GDAL_OF_RASTER ]
+    if gomMode = 'vector [ goFlags: GDAL_OF_VECTOR ]
+    if gomMode = 'update [ goFlags: GDAL_OF_UPDATE ]
+    return (gdalOpenEx gomPath goFlags null null null)
 ]
 
-closeDataset: function [cdDs][
-    return (gdalClose cdDs)
-]
+openDataset: function [odPath][ return (gdalOpenMode odPath 'raster) ]
+openVector: function [ovPath][ return (gdalOpenMode ovPath 'vector) ]
+
+closeDataset: function [cdDs][ return (gdalClose cdDs) ]
+
+; the GDAL release, e.g. "3.13.2"
+gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
+
+;------------------------------------------------------------------
+; dataset facts
+;------------------------------------------------------------------
 
 rasterWidth: function [rwDs][ return (gdalGetRasterXSize rwDs) ]
 rasterHeight: function [rhDs][ return (gdalGetRasterYSize rhDs) ]
 rasterCount: function [rcDs][ return (gdalGetRasterCount rcDs) ]
+
+rasterSize: function [rsDs] [
+    rsW: gdalGetRasterXSize rsDs
+    rsH: gdalGetRasterYSize rsDs
+    rsB: gdalGetRasterCount rsDs
+    return #[width: rsW height: rsH bands: rsB]
+]
+
+driverName: function [dnDs] [
+    dnDrv: gdalGetDatasetDriver dnDs
+    if null? dnDrv [ return null ]
+    return (gdalGetDriverShortName dnDrv)
+]
+
+driverLongName: function [dlnDs] [
+    dlnDrv: gdalGetDatasetDriver dlnDs
+    if null? dlnDrv [ return null ]
+    return (gdalGetDriverLongName dlnDrv)
+]
+
+description: function [deDs][ return (gdalGetDescription deDs) ]
+
+; a single metadata item from the default domain (or "" if absent)
+metadataItem: function [miDs miKey][ return (gdalGetMetadataItem miDs miKey "") ]
 
 ; bytes per pixel for a GDALDataType
 bandBytes: function [bbT] [
@@ -6573,6 +6616,22 @@ bandBytes: function [bbT] [
 
 ; data type code of a band (GDT_*)
 bandDataType: function [bdBand][ return (gdalGetRasterDataType bdBand) ]
+
+; facts about one band as a dict
+bandInfo: function [biDs biIndex] [
+    biB: gdalGetRasterBand biDs biIndex
+    if null? biB [ return null ]
+    biT: gdalGetRasterDataType biB
+    biW: gdalGetRasterBandXSize biB
+    biH: gdalGetRasterBandYSize biB
+    biBuf: ffiAlloc 4
+    biN: gdalGetRasterNoDataValue biB biBuf
+    biHas: ffiLoadI32 biBuf 0
+    biF: ffiFree biBuf
+    biNodata: null
+    if not? (biHas = 0) [ biNodata: biN ]
+    return #[type: biT width: biW height: biH nodata: biNodata]
+]
 
 ; read one band into a flat block of Arturo numbers (row-major)
 readBand: function [rbDs rbIndex] [
@@ -6636,16 +6695,74 @@ projection: function [prDs][ return (gdalGetProjectionRef prDs) ]
 layerCount: function [lcDs][ return (gdalDatasetGetLayerCount lcDs) ]
 layerAt: function [laDs laI][ return (gdalDatasetGetLayer laDs laI) ]
 layerNamed: function [lnDs lnName][ return (gdalDatasetGetLayerByName lnDs lnName) ]
+layerName: function [lnL][ return (ogr_L_GetName lnL) ]
+layerGeometryType: function [lgtL][ return (ogr_L_GetGeomType lgtL) ]
+
+; iterate every layer of a dataset; each layer handle is bound to
+; itemName (a literal) inside the body, e.g.
+;   eachLayer ds 'layer [ print [layerName layer (layerGeometryType layer)] ]
+eachLayer: function [elDs elItemName elBody] [
+    elLayers: []
+    elN: gdalDatasetGetLayerCount elDs
+    elI: 0
+    while [elI < elN] [
+        elLayers: elLayers ++ @[(gdalDatasetGetLayer elDs elI)]
+        elI: elI + 1
+    ]
+    loop elLayers elItemName [ do elBody ]
+]
 
 resetReading: function [rrLayer][ return (ogr_L_ResetReading rrLayer) ]
 nextFeature: function [nfLayer][ return (ogr_L_GetNextFeature nfLayer) ]
 featureCount: function [fcLayer][ return (ogr_L_GetFeatureCount fcLayer 0) ]
 destroyFeature: function [dfF][ return (ogr_F_Destroy dfF) ]
 
+; iterate a layer's features; each feature handle is bound to itemName
+; (a literal) inside the body and destroyed automatically afterwards,
+; e.g.
+;   eachFeature layer 'f [
+;       print [featureId f (featureWkt f)]
+;   ]
+eachFeature: function [efLayer efItemName efBody] [
+    efR: ogr_L_ResetReading efLayer
+    efFs: []
+    efF: ogr_L_GetNextFeature efLayer
+    while [not? null? efF] [
+        efFs: efFs ++ @[efF]
+        efF: ogr_L_GetNextFeature efLayer
+    ]
+    loop efFs efItemName [ do efBody ]
+    loop efFs 'efKill [
+        efK: ogr_F_Destroy efKill
+    ]
+]
+
 featureId: function [fiF][ return (ogr_F_GetFID fiF) ]
 fieldCount: function [fncF][ return (ogr_F_GetFieldCount fncF) ]
 fieldAsString: function [fasF fasI][ return (ogr_F_GetFieldAsString fasF fasI) ]
 featureGeometry: function [fgF][ return (ogr_F_GetGeometryRef fgF) ]
+
+; the value of a named field, or null when the field does not exist
+featureField: function [ffF ffName] [
+    ffIdx: ogr_F_GetFieldIndex ffF ffName
+    if ffIdx < 0 [ return null ]
+    return (ogr_F_GetFieldAsString ffF ffIdx)
+]
+
+; every field as a list of #[name: .. value: ..] records
+featureFields: function [ffsF] [
+    ffsN: ogr_F_GetFieldCount ffsF
+    ffsOut: []
+    ffsI: 0
+    while [ffsI < ffsN] [
+        ffsD: ogr_F_GetFieldDefnRef ffsF ffsI
+        ffsName: ogr_Fld_GetNameRef ffsD
+        ffsVal: ogr_F_GetFieldAsString ffsF ffsI
+        ffsOut: ffsOut ++ @[#[name: ffsName value: ffsVal]]
+        ffsI: ffsI + 1
+    ]
+    return ffsOut
+]
 
 ; export a geometry to WKT via the OGR_G_ExportToWkt char** out-slot
 ; (SPEC 13). The returned string is freed with GDAL's allocator (SPEC 12).

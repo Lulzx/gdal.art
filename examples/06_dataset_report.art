@@ -1,0 +1,46 @@
+;===========================================================
+; 06_dataset_report.art
+;
+; A one-stop report on a dataset: version, driver, dimensions,
+; geotransform, projection and metadata.
+;
+; Run from the repository root:
+;   arturo examples/06_dataset_report.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/map.tif"
+    print ["GDAL" (gdalVersion)]
+    print ["file: examples/fixtures/map.tif"]
+    print ""
+
+    dn: driverName ds
+    dln: driverLongName ds
+    print ["driver:" dn "(" dln ")"]
+
+    sz: rasterSize ds
+    print ["raster:" sz\width "x" sz\height "," sz\bands "band(s)"]
+
+    bi: bandInfo ds 1
+    print ["band 1:" bi]
+    print ""
+
+    print ["geotransform:"]
+    gt: geotransform ds
+    print ["  origin" "(" gt\0 "," gt\3 ")"]
+    print ["  pixel size" "(" gt\1 "," gt\5 ")"]
+    print ""
+
+    print ["projection:"]
+    pr: projection ds
+    print pr
+    print ""
+
+    print ["metadata:"]
+    mi: metadataItem ds "AREA_OR_POINT"
+    print ["  AREA_OR_POINT =" mi]
+
+    closeDataset ds
+]

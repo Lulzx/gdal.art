@@ -1,0 +1,32 @@
+;===========================================================
+; 07_layers_and_routes.art
+;
+; Iterate every layer of a dataset with eachLayer, then walk each
+; layer's features with eachFeature. Line geometries export to
+; WKT just like points do.
+;
+; Run from the repository root:
+;   arturo examples/07_layers_and_routes.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/routes.geojson"
+    print ["dataset has" (layerCount ds) "layer(s)"]
+    print ""
+
+    eachLayer ds 'layer [
+        nm: layerName layer
+        print [nm "(" (featureCount layer) "features):"]
+        eachFeature layer 'f [
+            rname: featureField f "name"
+            km: featureField f "dist_km"
+            wkt: featureWkt f
+            print ["   " rname "-" km "km:" wkt]
+        ]
+        print ""
+    ]
+
+    closeDataset ds
+]

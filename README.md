@@ -45,9 +45,11 @@ vector core   16 / 17   (94%)
 SRS core      10 / 10   (100%)
 ```
 
-`make test` runs four suites: the Stage A generation round-trip, the
-`SPEC` §21 raster success test, the §23 vector success test, and the §44
-CRS transform test.
+`make test` runs five suites: the Stage A generation round-trip, the
+`SPEC` §21 raster success test, the §23 vector success test, the §44 CRS
+transform test, and a suite that locks in the idiomatic layer
+(`gdalOpen`, `rasterSize`, `eachFeature`, `featureFields`, ...).
+`make examples` runs the seven worked examples under `examples/`.
 
 ## Requirements
 
@@ -74,16 +76,31 @@ standard paths, then `GDAL_INCLUDE_PATH` / `GDAL_LIBRARY_PATH`.
 import "gdal"
 
 do [
-    ds: gdalOpenEx "map.tif" GDAL_OF_RASTER null null null
-    print gdalGetRasterXSize ds
-    print gdalGetRasterYSize ds
-    gdalClose ds
+    ds: gdalOpen "map.tif"
+    print rasterSize ds                 ; #[width: .. height: .. bands: ..]
+    print driverName ds                 ; "GTiff"
+    print geotransform ds               ; [gt0 gt1 gt2 gt3 gt4 gt5]
+    closeDataset ds
+
+    layer: layerNamed ds "points"
+    eachFeature layer 'f [
+        print featureId f
+        print featureWkt f
+    ]
 ]
 ```
 
-Raw names stay recognizable (`GDALOpenEx` -> `gdalOpenEx`,
-`OGR_G_ExportToWkt` -> `ogr_G_ExportToWkt`). A small sugar layer
-(`openDataset`, `closeDataset`, `rasterWidth`, ...) sits on top.
+`gdalOpen` opens any driver read-only (raster or vector); `gdalOpenMode`
+restricts the kind or asks for write access (`'raster`, `'vector`,
+`'update`). Run the seven worked examples and read them for the pattern:
+
+```sh
+make examples
+```
+
+The raw generated bindings stay available and recognizable
+(`gdalOpenEx`, `ogr_G_ExportToWkt`, ...) for callers who need the full C
+surface; `sugar.art` is a thin convenience layer that never hides them.
 
 ## Layout
 
@@ -93,6 +110,7 @@ generated/   generated bindings + constants + types + ownership + manifest
 main.art     self-contained package entry (ffi + generated + sugar)
 sugar.art    idiomatic layer over the raw bindings
 tests/       test suite
+examples/    worked examples + fixtures (make examples)
 ```
 
 `make check` regenerates twice into temp dirs and fails on drift; the golden

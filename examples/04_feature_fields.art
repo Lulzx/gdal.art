@@ -1,0 +1,34 @@
+;===========================================================
+; 04_feature_fields.art
+;
+; Inspect a single feature's attribute schema: every field as a
+; list of #[name: value] records, plus direct lookup by name.
+;
+; Run from the repository root:
+;   arturo examples/04_feature_fields.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/points.geojson"
+    layer: layerNamed ds "points"
+
+    resetReading layer
+    f: nextFeature layer
+    print ["feature" (featureId f) "has" (fieldCount f) "fields:"]
+
+    fields: featureFields f
+    loop fields 'rec [
+        print ["   " rec\name "=" rec\value]
+    ]
+
+    hgt: featureField f "height"
+    print ""
+    print ["height ==" hgt]
+    missing: featureField f "nope"
+    print ["unknown field returns:" missing]
+
+    destroyFeature f
+    closeDataset ds
+]

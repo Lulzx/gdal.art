@@ -13,7 +13,7 @@
 #   standard include/lib paths
 #   GDAL_INCLUDE_PATH / GDAL_LIBRARY_PATH  (explicit, Windows route)
 
-.PHONY: native generate check test coverage clean
+.PHONY: native generate check test examples coverage clean
 
 ARTURO ?= arturo
 GDAL_CHECK_VERSION ?= 3.8
@@ -30,6 +30,12 @@ check: native
 
 test: native
 	./tests/run_tests.sh
+
+examples: native
+	@for e in examples/[0-9]*.art; do \
+		echo "==== $$e ===="; \
+		$(ARTURO) "$$e" || exit 1; \
+	done
 
 coverage: native
 	$(ARTURO) generator/main.art coverage

@@ -1,0 +1,26 @@
+;===========================================================
+; 01_open_dataset.art
+;
+; The gdal.art "hello world". Where the raw bindings force
+;   gdalOpenEx "map.tif" GDAL_OF_RASTER null null null
+; the idiomatic layer is just:
+;   gdalOpen "map.tif"
+;
+; Run from the repository root:
+;   arturo examples/01_open_dataset.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/map.tif"
+    if null? ds [ panic "could not open examples/fixtures/map.tif" ]
+
+    dn: driverName ds
+    print ["driver:" dn]
+    sz: rasterSize ds
+    print ["size:" sz]
+    print ["geotransform:" (geotransform ds)]
+
+    closeDataset ds
+]

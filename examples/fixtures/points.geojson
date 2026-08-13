@@ -1,0 +1,6 @@
+{"type":"FeatureCollection","features":[
+ {"type":"Feature","id":1,"properties":{"city":"Dehradun","name":"Clock Tower","height":660,"pop":600000},"geometry":{"type":"Point","coordinates":[78.0324,30.3165]}},
+ {"type":"Feature","id":2,"properties":{"city":"Mussoorie","name":"Camel's Back Road","height":2005,"pop":30000},"geometry":{"type":"Point","coordinates":[78.0704,30.4555]}},
+ {"type":"Feature","id":3,"properties":{"city":"Rishikesh","name":"Lakshman Jhula","height":356,"pop":110000},"geometry":{"type":"Point","coordinates":[78.3245,30.1169]}},
+ {"type":"Feature","id":4,"properties":{"city":"Haridwar","name":"Har Ki Pauri","height":314,"pop":228000},"geometry":{"type":"Point","coordinates":[78.1666,29.9571]}}
+]}

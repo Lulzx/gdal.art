@@ -1,0 +1,31 @@
+;===========================================================
+; 03_geojson_features.art
+;
+; Walk every feature of a GeoJSON layer with eachFeature, reading
+; FIDs, named fields and the geometry as WKT. eachFeature binds
+; the current feature to the literal you give it and destroys it
+; automatically afterwards.
+;
+; Run from the repository root:
+;   arturo examples/03_geojson_features.art
+;===========================================================
+
+import "gdal"
+
+do [
+    ds: gdalOpen "examples/fixtures/points.geojson"
+    layer: layerNamed ds "points"
+    print ["layer:" (layerName layer) "-" (featureCount layer) "features"]
+    print ""
+
+    eachFeature layer 'f [
+        fid: featureId f
+        city: featureField f "city"
+        place: featureField f "name"
+        hgt: featureField f "height"
+        wkt: featureWkt f
+        print ["#" fid city "-" place "at" hgt "m" wkt]
+    ]
+
+    closeDataset ds
+]
