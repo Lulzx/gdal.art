@@ -118,7 +118,7 @@ The raw generated bindings stay available and recognizable (`gdalOpenEx`,
 
 ## Tests
 
-`make test` runs nine suites:
+`make test` runs ten suites:
 
 | Suite | Covers |
 | --- | --- |
@@ -131,6 +131,7 @@ The raw generated bindings stay available and recognizable (`gdalOpenEx`,
 | `vector_write.art` | vector creation, read-back, GEOS, and transforms |
 | `utilities.art` | translate, warp, vector translate, rasterize, and info |
 | `adversarial.art` | errors, scalar raster types, and streamed iteration |
+| `internet_fixtures.art` | pinned upstream TIFF, JPEG, PNG, GeoJSON, CSV, KML, Shapefile, and GeoPackage fixtures |
 
 `make check` covers generated output rather than runtime behavior. It
 regenerates the bindings twice to catch nondeterminism, verifies the ABI, and

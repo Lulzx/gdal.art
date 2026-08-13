@@ -1,0 +1,90 @@
+; Exercise the small, pinned upstream fixture matrix in fixtures/internet.
+
+import "gdal"
+
+t: #[failures: 0]
+check: function [label got expected] [
+    if got = expected [ print ["PASS" label] ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+do [
+    root: "tests/fixtures/internet/"
+
+    ; GeoTIFF: georeferencing plus a complete byte-band read.
+    tif: gdalOpen (root ++ "byte.tif")
+    check "GeoTIFF opens" (null? tif) false
+    check "GeoTIFF driver" (driverName tif) "GTiff"
+    check "GeoTIFF size" (rasterSize tif) #[width: 20 height: 20 bands: 1]
+    check "GeoTIFF byte band" (bandDataType (gdalGetRasterBand tif 1)) GDT_Byte
+    check "GeoTIFF pixel count" (size (readBand tif 1)) 400
+    check "GeoTIFF has projection" ((size (projection tif)) > 0) true
+    closeDataset tif
+
+    ; Two non-TIFF raster drivers and two data types.
+    jpg: gdalOpen (root ++ "byte_with_xmp.jpg")
+    check "JPEG opens" (null? jpg) false
+    check "JPEG driver" (driverName jpg) "JPEG"
+    check "JPEG size" (rasterSize jpg) #[width: 20 height: 20 bands: 1]
+    closeDataset jpg
+
+    png: gdalOpen (root ++ "uint16_interlaced.png")
+    check "PNG opens" (null? png) false
+    check "PNG driver" (driverName png) "PNG"
+    check "PNG UInt16 band" (bandDataType (gdalGetRasterBand png 1)) GDT_UInt16
+    check "PNG pixel count" (size (readBand png 1)) 400
+    closeDataset png
+
+    ; Sparse-schema GeoJSON.
+    json: gdalOpen (root ++ "sparse_fields.geojson")
+    check "GeoJSON driver" (driverName json) "GeoJSON"
+    jsonLayer: layerAt json 0
+    check "GeoJSON feature count" (featureCount jsonLayer) 14
+    jsonFeature: nextFeature jsonLayer
+    check "GeoJSON sparse schema fields" (fieldCount jsonFeature) 9
+    destroyFeature jsonFeature
+    closeDataset json
+
+    ; Attribute-only CSV.
+    csv: gdalOpen (root ++ "typed.csv")
+    check "CSV driver" (driverName csv) "CSV"
+    csvLayer: layerAt csv 0
+    check "CSV row count" (featureCount csvLayer) 9
+    csvFeature: nextFeature csvLayer
+    check "CSV field count" (fieldCount csvFeature) 20
+    destroyFeature csvFeature
+    closeDataset csv
+
+    ; KML and the sidecar-dependent Shapefile driver.
+    kml: gdalOpen (root ++ "geometries.kml")
+    check "KML opens" (null? kml) false
+    ; LIBKML exposes 25 while the built-in KML driver exposes 22 because
+    ; they interpret a few container/geometric constructs differently.
+    check "KML features present" ((featureCount (layerAt kml 0)) > 0) true
+    closeDataset kml
+
+    shp: gdalOpen (root ++ "shapefile/poly.shp")
+    check "Shapefile driver" (driverName shp) "ESRI Shapefile"
+    check "Shapefile feature count" (featureCount (layerAt shp 0)) 10
+    closeDataset shp
+
+    ; Ordinary vector GPKG and a dataset exposing both raster and vector APIs.
+    gpkg: gdalOpen (root ++ "poly.gpkg")
+    check "vector GPKG driver" (driverName gpkg) "GPKG"
+    check "vector GPKG feature count" (featureCount (layerAt gpkg 0)) 10
+    closeDataset gpkg
+
+    mixed: gdalOpen (root ++ "raster_and_vector.gpkg")
+    check "mixed GPKG driver" (driverName mixed) "GPKG"
+    check "mixed GPKG raster" (rasterSize mixed) #[width: 20 height: 20 bands: 1]
+    check "mixed GPKG layers" (layerCount mixed) 1
+    check "mixed GPKG features" (featureCount (layerAt mixed 0)) 10
+    closeDataset mixed
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "internet_fixtures: all tests passed" ]
+    if not? (t\failures = 0) [ panic "internet_fixtures: FAILED" ]
+]
