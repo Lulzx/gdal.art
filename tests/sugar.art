@@ -22,7 +22,8 @@ check: function [label got expected] [
 
 do [
     v: gdalVersion
-    check "version" v "3.13.2"
+    check "version present" (contains? v ".") true
+    check "at least 3.8.0" (gdalAtLeast 3 8 0) true
 
     ; raster facts
     ds: gdalOpen "examples/fixtures/map.tif"
@@ -65,7 +66,6 @@ do [
     closeDataset pts
 
     ; version guards (SPEC 29-30)
-    check "at least 3.8.0" (gdalAtLeast 3 8 0) true
     check "not at least 4.0.0" (gdalAtLeast 4 0 0) false
     check "has GDALOpenEx" (gdalHasSymbol "GDALOpenEx") true
     check "missing symbol flagged" (gdalHasSymbol "CPLCleanupSetlocaleMutex") false

@@ -6,10 +6,14 @@
 ; that the emitted constants agree with the compiled headers.
 ;===========================================================
 
-; run `nm -gU` over the library and collect exported symbols
+; run the library's symbol dump and collect exported symbols.
+; nm flags differ per platform: macOS `-gU` (defined external), Linux
+; `-D --defined-only` (dynamic symbol table).
 gsNmSymbols: function [gnsLib] [
     gnsOut: #[]
-    gnsR: execute.code ("nm -gU \"" ++ gnsLib ++ "\"")
+    gnsCmd: "nm -gU \"" ++ gnsLib ++ "\""
+    if gsPlatform = "linux" [ gnsCmd: "nm -D --defined-only \"" ++ gnsLib ++ "\"" ]
+    gnsR: execute.code gnsCmd
     if (gnsR\code) = 0 [
         loop (split.lines (gnsR\output)) 'gnsLine [
             gnsParts: split.by: " " (strip gnsLine)
@@ -45,7 +49,7 @@ gsVerifySymbols: function [gvsFns] [
 gsAbiProbeSource: function [] [
     gapS: ""
     gapS: gapS ++ "#include <stdio.h>\n"
-    loop gsHeaders 'gapH [ gapS: gapS ++ "#include \"" ++ (to :string gapH) ++ "\"\n" ]
+    loop gsEffectiveHeaders 'gapH [ gapS: gapS ++ "#include \"" ++ (to :string gapH) ++ "\"\n" ]
     gapS: gapS ++ "int main(void) {\n"
     gapNames: sort (keys gsConstants)
     loop gapNames 'gapN [

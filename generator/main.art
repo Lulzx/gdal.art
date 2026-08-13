@@ -19,6 +19,11 @@ gsHeaders: [
     "cpl_error.h" "cpl_conv.h" "cpl_string.h" "cpl_vsi.h" "cpl_port.h"
     "gdal_utils.h"
 ]
+
+; headers that exist for the installed GDAL. Some versions drop headers
+; (e.g. gdal_fwd.h was folded into gdal.h in GDAL 3.10); the effective
+; set is computed at discovery time so generation is portable.
+gsEffectiveHeaders: []
 gsOutRoot: "."
 
 ;---- modules -----------------------------------------------------------
@@ -213,7 +218,7 @@ gsIsIntLiteral: function [gilS] [
 ; mutates the global gsConstants (caller resets it first)
 gsCollectConstants: function [] [
     gccInc: ""
-    loop gsHeaders 'gccH [ gccInc: gccInc ++ "-include " ++ (to :string gccH) ++ " " ]
+    loop gsEffectiveHeaders 'gccH [ gccInc: gccInc ++ "-include " ++ (to :string gccH) ++ " " ]
     gccCmd: "cc -E -dM -I" ++ gsIncludeDir ++ " " ++ gccInc ++ "-x c /dev/null"
     gccR: gsExecCode gccCmd
     gccAliases: #[]
@@ -278,7 +283,7 @@ gsCollectConstants: function [] [
 ; NOT escape in this Arturo build, so nothing here rebinds a global.
 gsRunPipeline: function [grpMode grpRoot] [
     ; read + clean + tokenize headers
-    loop gsHeaders 'grpH [
+    loop gsEffectiveHeaders 'grpH [
         grpName: to :string grpH
         grpPath: gsIncludeDir ++ "/" ++ grpName
         if not? (exists? grpPath) [
@@ -288,7 +293,7 @@ gsRunPipeline: function [grpMode grpRoot] [
     ]
 
     ; parse -> normalize -> constants -> verify
-    grpFns: gsParseAll gsHeaders
+    grpFns: gsParseAll gsEffectiveHeaders
     grpFns: gsNormalizeAll grpFns
     gsCollectConstants
     grpMissing: gsVerifySymbols grpFns
@@ -361,9 +366,21 @@ do [
     gsLibTarget: gsDisc\libTarget
     if null = gsIncludeDir [ panic "gdal.art: could not determine GDAL include path" ]
 
+    ; effective headers: those the installed GDAL actually ships
+    gsEffectiveHeaders: []
+    loop gsHeaders 'gseH [
+        gseN: to :string gseH
+        if exists? (gsIncludeDir ++ "/" ++ gseN) [
+            gsEffectiveHeaders: gsEffectiveHeaders ++ @[gseN]
+        ]
+        if not? (exists? (gsIncludeDir ++ "/" ++ gseN)) [
+            print ["note: skipping header not shipped by this GDAL:" gseN]
+        ]
+    ]
+
     ; record the preprocessing command (SPEC 6.2)
     gsPreprocessCmd: "cc -E -dM -I" ++ gsIncludeDir ++ " "
-    loop gsHeaders 'gspH [ gsPreprocessCmd: gsPreprocessCmd ++ "-include " ++ (to :string gspH) ++ " " ]
+    loop gsEffectiveHeaders 'gspH [ gsPreprocessCmd: gsPreprocessCmd ++ "-include " ++ (to :string gspH) ++ " " ]
     gsPreprocessCmd: gsPreprocessCmd ++ "-x c /dev/null"
 
     ; mutable generator state (reset before every run)

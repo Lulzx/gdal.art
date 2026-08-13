@@ -80,6 +80,11 @@ make coverage    # print coverage and deferred reasons
 GDAL discovery order (SPEC §6.1): `GDAL_CONFIG`, `gdal-config`, `pkg-config`,
 standard paths, then `GDAL_INCLUDE_PATH` / `GDAL_LIBRARY_PATH`.
 
+CI (SPEC §50): a GitHub Actions workflow runs the full matrix — `make native
+generate check test coverage` — on macOS arm64 (Homebrew GDAL) and Linux
+x86_64 (GDAL 3.10.1 in the OSGeo GHCR container), pinned to the released
+Arturo v0.10.0 binary on both.
+
 ## Use
 
 ```arturo

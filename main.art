@@ -60,6 +60,17 @@ ffiFindAdapter: function [] [
         ffE: get env "ARTURO_FFI_NATIVE"
         if not? (null = ffE) -> return ffE
     ]
+    ; prefer this platform's shared-library extension so a build dir that
+    ; happens to hold artifacts for more than one OS picks the loadable one
+    ffExt: "dylib"
+    ffOs: to :string (sys\os)
+    if ffOs = "Linux" [ ffExt: "so" ]
+    if ffOs = "Windows" [ ffExt: "dll" ]
+    loop ffiNativeNames 'ffCand [
+        if contains? ffCand ffExt [
+            if exists? ffCand -> return ffCand
+        ]
+    ]
     loop ffiNativeNames 'ffCand [
         if exists? ffCand -> return ffCand
     ]
