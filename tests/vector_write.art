@@ -1,0 +1,113 @@
+;===========================================================
+; vector_write.art - vector creation + write round-trip (SPEC 46)
+;
+; Create a GeoJSON dataset, add a layer with fields, build
+; features with points, commit them, close, reopen, and verify
+; the read side. Then exercise geometry predicates and a
+; coordinate-transformed geometry.
+;===========================================================
+
+import "gdal"
+
+t: #[failures: 0]
+check: function [label got expected] [
+    if got = expected [ print ["PASS" label] ]
+    if not? (got = expected) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+checkClose: function [label got expected tol] [
+    d: got - expected
+    if d < 0 [ d: 0 - d ]
+    if d < tol [ print ["PASS" label] ]
+    if not? (d < tol) [
+        print ["FAIL" label "got:" got "expected:" expected]
+        t\failures: t\failures + 1
+    ]
+]
+
+path: "/tmp/gdal_art_vwrite.geojson"
+
+do [
+    execute ("rm -f " ++ path)
+    ds: createVectorDataset "GeoJSON" path
+    check "created" (null? ds) false
+
+    srs: spatialReference "EPSG:4326"
+    layer: createLayer ds "places" srs wkbPoint
+    check "layer created" (null? layer) false
+    check "layer name" (layerName layer) "places"
+
+    check "add string field" (addField layer "name" OFTString) 0
+    check "add real field" (addField layer "height" OFTReal) 0
+    check "add int field" (addField layer "pop" OFTInteger) 0
+
+    f1: newFeature layer
+    setFieldString f1 0 "peak"
+    setFieldDouble f1 1 3125.5
+    setFieldInteger f1 2 5000
+    g1: newPoint 77.5 31.2
+    featureSetGeometry f1 g1
+    check "create feature 1" (createFeature layer f1) 0
+
+    f2: newFeature layer
+    setFieldString f2 0 "pass"
+    setFieldDouble f2 1 2400.0
+    setFieldInteger f2 2 1200
+    g2: newPoint 77.6 31.1
+    featureSetGeometry f2 g2
+    check "create feature 2" (createFeature layer f2) 0
+
+    closeDataset ds
+    destroySpatialReference srs
+
+    ds2: gdalOpen path
+    layer2: layerNamed ds2 "places"
+    check "reopened layer" (layerName layer2) "places"
+    check "feature count" (featureCount layer2) 2
+
+    resetReading layer2
+    r1: nextFeature layer2
+    check "fid 0" (featureId r1) 0
+    check "name 0" (fieldAsString r1 0) "peak"
+    check "height 0" (fieldAsString r1 1) "3125.5"
+    w1: featureWkt r1
+    check "wkt 0" w1 "POINT (77.5 31.2)"
+    destroyFeature r1
+
+    r2: nextFeature layer2
+    check "fid 1" (featureId r2) 1
+    check "name 1" (fieldAsString r2 0) "pass"
+    w2: featureWkt r2
+    check "wkt 1" w2 "POINT (77.6 31.1)"
+    destroyFeature r2
+    closeDataset ds2
+
+    ; geometry predicates
+    p1: newPoint 0.0 0.0
+    p2: newPoint 1.0 1.0
+    dist: geometryDistance p1 p2
+    checkClose "point distance" dist 1.4142135623730951 0.000001
+    check "points disjoint" (geometryIntersects p1 p2) 0
+    destroyGeometry p1
+    destroyGeometry p2
+
+    ; geometry transform: EPSG:4326 point -> UTM 43N
+    src: spatialReference "EPSG:4326"
+    dst: spatialReference "EPSG:32643"
+    ct: coordinateTransform src dst
+    g: newPoint 77.1734 31.1048
+    tr: geometryTransform g ct
+    check "geometry transform rc" tr 0
+    w: geometryWkt g
+    check "geometry transform wkt" w "POINT (707282.029380758 3443248.09534568)"
+    destroyGeometry g
+    destroyCoordinateTransform ct
+    destroySpatialReference src
+    destroySpatialReference dst
+
+    print "-------------------------------------"
+    if t\failures = 0 [ print "vector_write: all tests passed" ]
+    if not? (t\failures = 0) [ panic "vector_write: FAILED" ]
+]

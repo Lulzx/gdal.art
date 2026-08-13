@@ -20,6 +20,7 @@ the generated bindings (see `sugar.art`). The fixtures live in
 | `06_dataset_report.art` | driver, size, band info, geotransform, projection, metadata |
 | `07_layers_and_routes.art` | `eachLayer` + `eachFeature` over line geometries |
 | `08_write_geotiff.art` | `createDataset` + `setGeotransform` + `writeBand`, then read back |
+| `09_write_geojson.art` | build a GeoJSON from nothing: layer, fields, point features, read back |
 
 The same API at a glance:
 

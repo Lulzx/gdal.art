@@ -38,6 +38,87 @@ closeDataset: function [cdDs][ return (gdalClose cdDs) ]
 gdalVersion: function [] [ return (gdalVersionInfo "RELEASE_NAME") ]
 
 ;------------------------------------------------------------------
+; vector creation / writing (Stage F)
+;------------------------------------------------------------------
+
+; create a vector dataset via a driver short name ("GeoJSON", "GPKG", ...)
+createVectorDataset: function [cvdDriver cvdPath] [
+    cvdR: gdalAllRegister
+    cvdD: gdalGetDriverByName cvdDriver
+    if null? cvdD [ return null ]
+    return (gdalCreate cvdD cvdPath 0 0 0 GDT_Unknown null)
+]
+
+; create a layer in a dataset (srs may be null for no CRS)
+createLayer: function [clDs clName clSrs clGeomType] [
+    return (gdalDatasetCreateLayer clDs clName clSrs clGeomType null)
+]
+
+; add a field (OFTString / OFTInteger / OFTInteger64 / OFTReal) to a layer
+addField: function [afLayer afName afType] [
+    afD: ogr_Fld_Create afName afType
+    if null? afD [ return null ]
+    afRc: ogr_L_CreateField afLayer afD 1
+    afK: ogr_Fld_Destroy afD
+    return afRc
+]
+
+layerDefn: function [ldL][ return (ogr_L_GetLayerDefn ldL) ]
+
+; a new (owned, empty) feature for a layer
+newFeature: function [nfLayer][ return (ogr_F_Create (ogr_L_GetLayerDefn nfLayer)) ]
+
+setFieldString: function [sfsF sfsI sfsV][ return (ogr_F_SetFieldString sfsF sfsI sfsV) ]
+setFieldInteger: function [sfiF sfiI sfiV][ return (ogr_F_SetFieldInteger sfiF sfiI sfiV) ]
+setFieldDouble: function [sfdF sfdI sfdV][ return (ogr_F_SetFieldDouble sfdF sfdI sfdV) ]
+featureSetGeometry: function [fsgF fsgG][ return (ogr_F_SetGeometry fsgF fsgG) ]
+
+; commit a feature to a layer (transfers ownership of the feature handle)
+createFeature: function [cfLayer cfF][ return (ogr_L_CreateFeature cfLayer cfF) ]
+
+; geometry construction (returned handles are owned; destroyFeature the
+; feature, or use ogr_G_DestroyGeometry for standalone geometries)
+newPoint: function [npX npY] [
+    npG: ogr_G_CreateGeometry wkbPoint
+    if null? npG [ return null ]
+    npR: ogr_G_SetPoint_2D npG 0 npX npY
+    return npG
+]
+
+newLineString: function [nlsPts] [
+    nlsG: ogr_G_CreateGeometry wkbLineString
+    if null? nlsG [ return null ]
+    nlsI: 0
+    while [nlsI < (size nlsPts)] [
+        nlsP: nlsPts\[nlsI]
+        nlsX: nlsP\0
+        nlsY: nlsP\1
+        nlsR: ogr_G_AddPoint nlsG nlsX nlsY 0.0
+        nlsI: nlsI + 1
+    ]
+    return nlsG
+]
+
+destroyGeometry: function [dgG][ return (ogr_G_DestroyGeometry dgG) ]
+
+; geometry predicates / ops (require GEOS in the GDAL build)
+geometryIntersects: function [giA giB][ return (ogr_G_Intersects giA giB) ]
+geometryContains: function [gcA gcB][ return (ogr_G_Contains gcA gcB) ]
+geometryWithin: function [gwA gwB][ return (ogr_G_Within gwA gwB) ]
+geometryDistance: function [gdA gdB][ return (ogr_G_Distance gdA gdB) ]
+geometryUnion: function [guA guB][ return (ogr_G_Union guA guB) ]
+
+; transform a geometry with a coordinate transformation handle
+coordinateTransform: function [ctSrc ctDst][ return (octNewCoordinateTransformation ctSrc ctDst) ]
+destroyCoordinateTransform: function [dctC][ return (octDestroyCoordinateTransformation dctC) ]
+geometryTransform: function [gtG gtCt][ return (ogr_G_Transform gtG gtCt) ]
+
+; transactions (supported by GPKG and friends)
+beginTransaction: function [btLayer][ return (ogr_L_StartTransaction btLayer) ]
+commitTransaction: function [ctLayer][ return (ogr_L_CommitTransaction ctLayer) ]
+rollbackTransaction: function [rtLayer][ return (ogr_L_RollbackTransaction rtLayer) ]
+
+;------------------------------------------------------------------
 ; raster creation / writing
 ;------------------------------------------------------------------
 

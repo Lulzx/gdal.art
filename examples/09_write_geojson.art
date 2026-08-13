@@ -1,0 +1,60 @@
+;===========================================================
+; 09_write_geojson.art
+;
+; Build a GeoJSON dataset from nothing: create the dataset, a
+; layer, its fields, and a couple of point features, then reopen
+; and read them back.
+;
+; Run from the repository root:
+;   arturo examples/09_write_geojson.art
+;===========================================================
+
+import "gdal"
+
+do [
+    path: "/tmp/gdal_art_places.geojson"
+    execute ("rm -f " ++ path)
+    ds: createVectorDataset "GeoJSON" path
+    if null? ds [ panic "could not create " ++ path ]
+
+    srs: spatialReference "EPSG:4326"
+    layer: createLayer ds "places" srs wkbPoint
+
+    addField layer "name" OFTString
+    addField layer "height" OFTReal
+    addField layer "pop" OFTInteger
+
+    ; three mountain towns (dicts are appended by reference; a block of
+    ; dict literals would flatten in this Arturo build)
+    towns: []
+    t1: #[name: "Dehradun" height: 660.0 pop: 600000 x: 78.0324 y: 30.3165]
+    towns: towns ++ @[t1]
+    t2: #[name: "Mussoorie" height: 2005.0 pop: 30000 x: 78.0704 y: 30.4555]
+    towns: towns ++ @[t2]
+    t3: #[name: "Rishikesh" height: 356.0 pop: 110000 x: 78.3245 y: 30.1169]
+    towns: towns ++ @[t3]
+    loop towns 'town [
+        f: newFeature layer
+        setFieldString f 0 town\name
+        setFieldDouble f 1 town\height
+        setFieldInteger f 2 town\pop
+        g: newPoint town\x town\y
+        featureSetGeometry f g
+        createFeature layer f
+    ]
+    closeDataset ds
+    destroySpatialReference srs
+    print ["wrote" (size towns) "features to" path]
+
+    ; read it back
+    ds2: gdalOpen path
+    layer2: layerNamed ds2 "places"
+    print ["layer:" (layerName layer2) "-" (featureCount layer2) "features"]
+    eachFeature layer2 'f [
+        nm: featureField f "name"
+        hgt: featureField f "height"
+        w: featureWkt f
+        print ["   " nm "at" hgt "m" w]
+    ]
+    closeDataset ds2
+]
